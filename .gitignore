@@ -1,0 +1,83 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+*.junit
+.pub-cache/
+.pub/
+coverage/
+*.unverified_requests
+out/
+*.swp
+*.swo
+*~
+
+# Platform-specific
+**/android/app/google-services.json
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/*/generated/
+**/android/app/build/
+**/ios/.symlinks/
+**/ios/DerivedData/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/Release.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/App.framework
+**/macos/Build/
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/linux/flutter/ephemeral/
+**/linux/flutter/generated_plugins.cmake
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/windows/flutter/ephemeral/
+**/windows/flutter/generated_plugins.cmake
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/packages/
+**/web/manifest.json
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+*.sublime-project
+*.sublime-workspace
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.log
+*.tmp
+*.temp
+.cache/
+
+# Qwen settings
+.qwen/
