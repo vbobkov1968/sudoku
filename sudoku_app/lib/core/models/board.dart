@@ -154,6 +154,28 @@ class Board {
     );
   }
 
+  /// Returns a board with a single cell replaced.
+  Board copyWithCell(int row, int col, Cell cell) {
+    final grid = List.generate(
+      9,
+      (r) => List.generate(
+        9,
+        (c) {
+          if (r == row && c == col) return cell;
+          final existing = _grid[r][c];
+          return Cell(
+            row: existing.row,
+            col: existing.col,
+            value: existing.value,
+            isGiven: existing.isGiven,
+            notes: Set<int>.from(existing.notes),
+          );
+        },
+      ),
+    );
+    return Board(grid);
+  }
+
   /// Returns a copy with only the given cells marked.
   Board copyWithGiven(List<List<bool>> givenMask) {
     return Board(
