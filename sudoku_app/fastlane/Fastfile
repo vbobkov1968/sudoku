@@ -1,0 +1,106 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build iOS app"
+  lane :build_ios do
+    UI.message("📱 Building iOS app via Flutter...")
+    sh("flutter", "build", "ios", "--release")
+  end
+
+  desc "Build iOS app for testing"
+  lane :build_ios_test do
+    UI.message("📱 Building iOS app for testing...")
+    sh("flutter", "build", "ios", "--debug")
+  end
+end
+
+platform :mac do
+  desc "Build macOS app"
+  lane :build_macos do
+    UI.message("🖥️ Building macOS app via Flutter...")
+    sh("flutter", "build", "macos", "--release")
+  end
+
+  desc "Build macOS app for testing"
+  lane :build_macos_test do
+    UI.message("🖥️ Building macOS app for testing...")
+    sh("flutter", "build", "macos", "--debug")
+  end
+end
+
+platform :android do
+  desc "Build Android app (APK)"
+  lane :build_android_apk do
+    sh("flutter", "build", "apk", "--release", "--output=build/app/outputs/flutter-apk/app-release.apk")
+  end
+
+  desc "Build Android app (AAB for Play Store)"
+  lane :build_android_aab do
+    sh("flutter", "build", "appbundle", "--release", "--output=build/app/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Build Android app for testing"
+  lane :build_android_test do
+    sh("flutter", "build", "apk", "--debug", "--output=build/app/outputs/flutter-apk/app-debug.apk")
+  end
+end
+
+desc "Run tests across all platforms"
+lane :test_all do
+  UI.message("Running Dart/Flutter tests...")
+  sh("flutter", "test", "--coverage", dir: ".")
+  
+  UI.message("Running widget tests...")
+  sh("flutter", "test", "test/widget_test.dart", "-v", dir: ".")
+  
+  UI.message("✅ All tests completed!")
+end
+
+desc "Run Flutter analyze"
+lane :analyze do
+  UI.message("Running Flutter analyze...")
+  sh("flutter", "analyze")
+  UI.message("✅ Analysis completed!")
+end
+
+desc "Run Flutter pub upgrade"
+lane :upgrade_dependencies do
+  UI.message("Upgrading Flutter dependencies...")
+  sh("flutter", "pub", "upgrade")
+  UI.message("✅ Dependencies upgraded!")
+end
+
+desc "Build all platforms (macOS, iOS, Android)"
+lane :build_all do
+  UI.message("🔨 Starting multi-platform build...")
+  
+  UI.message("📱 Building macOS...")
+  build_macos
+  
+  UI.message("📱 Building iOS...")
+  build_ios
+  
+  UI.message("🤖 Building Android (APK)...")
+  build_android_apk
+  
+  UI.message("✅ All platforms built successfully!")
+end
+
+desc "Clean build artifacts"
+lane :clean_builds do
+  UI.message("🧹 Cleaning build artifacts...")
+  sh("rm", "-rf", "build/")
+  sh("flutter", "clean")
+  UI.message("✅ Build artifacts cleaned!")
+end
+
+desc "Prepare for release: analyze, test, clean"
+lane :prepare_release do
+  UI.message("🚀 Preparing for release...")
+  
+  analyze
+  test_all
+  clean_builds
+  
+  UI.message("✅ Ready for release build!")
+end
