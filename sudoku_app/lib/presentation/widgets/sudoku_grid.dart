@@ -140,23 +140,41 @@ class SudokuCell extends StatelessWidget {
   }
 
   Widget _buildNotesGrid(ThemeData theme) {
-    return GridView.count(
-      crossAxisCount: 3,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      children: List.generate(9, (index) {
-        final digit = index + 1;
-        final hasNote = cell.notes.contains(digit);
-        return Center(
-          child: Text(
-            hasNote ? digit.toString() : '',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 10,
-            ),
+    // Use LayoutBuilder + Wrap instead of GridView to avoid macOS scrollbar issue
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellWidth = constraints.maxWidth / 3;
+        final cellHeight = constraints.maxHeight / 3;
+        
+        return Padding(
+          padding: const EdgeInsets.all(2),
+          child: Wrap(
+            spacing: 1,
+            runSpacing: 1,
+            children: List.generate(9, (index) {
+              final digit = index + 1;
+              final hasNote = cell.notes.contains(digit);
+              return SizedBox(
+                width: cellWidth - 2,
+                height: cellHeight - 2,
+                child: Center(
+                  child: Text(
+                    hasNote ? digit.toString() : '',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: hasNote
+                          ? theme.colorScheme.onSurfaceVariant.withOpacity(0.8)
+                          : Colors.transparent,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         );
-      }),
+      },
     );
   }
 

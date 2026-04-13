@@ -60,7 +60,8 @@ class GameState {
   /// Clears the value of the specified cell.
   bool clearCell(int row, int col) {
     final cell = _currentBoard.getCell(row, col);
-    if (cell.isGiven || cell.value == null) return false;
+    if (cell.isGiven) return false;
+    if (cell.value == null && cell.notes.isEmpty) return false;
 
     _recordState();
     _currentBoard = _currentBoard.copyWithCell(row, col, cell.cleared());

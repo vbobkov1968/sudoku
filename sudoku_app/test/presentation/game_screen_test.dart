@@ -112,11 +112,92 @@ void main() {
       ),
     );
 
-    final clearButtonFinder = find.byKey(const ValueKey('number_pad_clear'));
+    // Find and tap the backspace/clear button in toolbar
+    final clearButtonFinder = find.byIcon(Icons.backspace_outlined);
     expect(clearButtonFinder, findsOneWidget);
     await tester.tap(clearButtonFinder);
     await tester.pumpAndSettle();
 
     expect(gameState.currentBoard.getCell(row, col).value, isNull);
+  });
+
+  testWidgets('toggle note mode with button', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GameScreen(gameState: gameState),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Initially note mode is off
+    expect(gameState.noteMode, isFalse);
+
+    // Find and tap the note mode button
+    final noteModeButton = find.byIcon(Icons.edit_off_outlined);
+    expect(noteModeButton, findsOneWidget);
+    await tester.tap(noteModeButton);
+    await tester.pumpAndSettle();
+
+    // Note mode should be on
+    expect(gameState.noteMode, isTrue);
+
+    // Button icon should change
+    final noteModeButtonActive = find.byIcon(Icons.edit_note);
+    expect(noteModeButtonActive, findsOneWidget);
+  });
+
+  testWidgets('toggle note mode with keyboard', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GameScreen(gameState: gameState),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Initially note mode is off
+    expect(gameState.noteMode, isFalse);
+
+    // Press 'N' key
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+    await tester.pumpAndSettle();
+
+    // Note mode should be on
+    expect(gameState.noteMode, isTrue);
+
+    // Press 'N' again to toggle off
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+    await tester.pumpAndSettle();
+
+    expect(gameState.noteMode, isFalse);
+  });
+
+  testWidgets('input digit in note mode adds note', (WidgetTester tester) async {
+    final emptyInts = gameState.currentBoard.toInts();
+    final row = _findFirstEmptyCellRow(emptyInts);
+    final col = _findFirstEmptyCellCol(emptyInts);
+
+    gameState.selectCell(row, col);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GameScreen(gameState: gameState),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Enable note mode
+    gameState.toggleNoteMode();
+    await tester.pumpAndSettle();
+
+    // Input digit
+    final digit = 5;
+    final digitFinder = find.byKey(ValueKey('number_pad_$digit'));
+    await tester.tap(digitFinder);
+    await tester.pumpAndSettle();
+
+    // Cell should have note, not value
+    final cell = gameState.currentBoard.getCell(row, col);
+    expect(cell.value, isNull);
+    expect(cell.notes, contains(digit));
   });
 }
