@@ -37,8 +37,9 @@ void main() {
   });
 
   Future<void> pumpGameScreen(WidgetTester tester) async {
-    tester.binding.window.physicalSizeTestValue = const Size(1200, 900);
-    tester.binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
         home: GameScreen(gameState: gameState),
