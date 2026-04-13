@@ -11,6 +11,7 @@ class GameState {
   final List<Board> _undoStack = [];
   final List<Board> _redoStack = [];
   bool noteMode;
+  (int, int)? _selectedCell; // (row, col) tuple, null if no selection
 
   GameState({
     required this.initialBoard,
@@ -18,12 +19,29 @@ class GameState {
     Board? currentBoard,
     this.noteMode = false,
     this.historyLimit = 50,
-  }) : _currentBoard = currentBoard ?? initialBoard.copy();
+    (int, int)? selectedCell,
+  }) : _currentBoard = currentBoard ?? initialBoard.copy(),
+       _selectedCell = selectedCell;
 
   Board get currentBoard => _currentBoard;
 
   bool get canUndo => _undoStack.isNotEmpty;
   bool get canRedo => _redoStack.isNotEmpty;
+
+  /// Gets the currently selected cell position, null if none selected.
+  (int, int)? get selectedCell => _selectedCell;
+
+  /// Selects a cell at the given position.
+  void selectCell(int row, int col) {
+    if (row >= 0 && row < 9 && col >= 0 && col < 9) {
+      _selectedCell = (row, col);
+    }
+  }
+
+  /// Clears the current cell selection.
+  void clearSelection() {
+    _selectedCell = null;
+  }
 
   /// Applies a normal digit entry to the board.
   /// Returns true when the move is valid and applied.

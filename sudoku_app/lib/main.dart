@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/localization/app_locale.dart';
+import 'core/generator/puzzle_generator.dart';
+import 'core/models/game_state.dart';
+import 'core/models/difficulty.dart';
 import 'presentation/theme/app_theme.dart';
+import 'presentation/game_screen.dart';
 
 void main() {
   runApp(const SudokuApp());
@@ -13,6 +17,14 @@ class SudokuApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Generate a sample easy puzzle for demonstration
+    final generator = PuzzleGenerator(seed: 42); // Fixed seed for consistent demo
+    final puzzle = generator.generate(Difficulty.easy);
+    final gameState = GameState(
+      initialBoard: puzzle.puzzle,
+      solutionBoard: puzzle.solution,
+    );
+
     return MaterialApp(
       title: 'Sudoku',
       debugShowCheckedModeBanner: false,
@@ -31,26 +43,8 @@ class SudokuApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
 
-      // Initial route
-      home: const PlaceholderScreen(title: 'Home'),
-    );
-  }
-}
-
-/// Temporary placeholder until screens are implemented.
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sudoku'),
-      ),
-      body: Center(
-        child: Text(title),
-      ),
+      // Game screen
+      home: GameScreen(gameState: gameState),
     );
   }
 }
