@@ -97,10 +97,22 @@ class SudokuCell extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           border: Border(
-            top: BorderSide(color: borderColor, width: _topBorderWidth(cell.row)),
-            left: BorderSide(color: borderColor, width: _leftBorderWidth(cell.col)),
-            right: BorderSide(color: borderColor, width: borderWidth),
-            bottom: BorderSide(color: borderColor, width: borderWidth),
+            top: BorderSide(
+              color: borderColor,
+              width: cell.row % 3 == 0 ? 2.0 : 0.5,
+            ),
+            left: BorderSide(
+              color: borderColor,
+              width: cell.col % 3 == 0 ? 2.0 : 0.5,
+            ),
+            right: BorderSide(
+              color: borderColor,
+              width: (cell.col + 1) % 3 == 0 ? 2.0 : 0.5,
+            ),
+            bottom: BorderSide(
+              color: borderColor,
+              width: (cell.row + 1) % 3 == 0 ? 2.0 : 0.5,
+            ),
           ),
         ),
         child: Center(
@@ -153,15 +165,5 @@ class SudokuCell extends StatelessWidget {
   /// Returns true if this cell should have thick borders (3x3 block separation).
   bool _hasThickBorder(int row, int col) {
     return row % 3 == 2 || col % 3 == 2;
-  }
-
-  /// Returns the top border width for the cell at the given row.
-  double _topBorderWidth(int row) {
-    return row % 3 == 0 ? 2.0 : 0.5;
-  }
-
-  /// Returns the left border width for the cell at the given column.
-  double _leftBorderWidth(int col) {
-    return col % 3 == 0 ? 2.0 : 0.5;
   }
 }
