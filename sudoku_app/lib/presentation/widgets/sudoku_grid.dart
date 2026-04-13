@@ -86,10 +86,8 @@ class SudokuCell extends StatelessWidget {
       backgroundColor = colorScheme.surface;
     }
 
-    // Determine border color and width for 3x3 block separation
+    // Determine border color for 3x3 block separation
     final borderColor = colorScheme.outline;
-    final isThickBorder = _hasThickBorder(cell.row, cell.col);
-    final borderWidth = isThickBorder ? 2.0 : 0.5;
 
     return InkWell(
       onTap: onTap,
@@ -162,8 +160,4 @@ class SudokuCell extends StatelessWidget {
     );
   }
 
-  /// Returns true if this cell should have thick borders (3x3 block separation).
-  bool _hasThickBorder(int row, int col) {
-    return row % 3 == 2 || col % 3 == 2;
-  }
 }

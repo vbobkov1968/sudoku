@@ -67,6 +67,26 @@ class GameState {
     return true;
   }
 
+  /// Applies digit input based on the current note mode.
+  bool applyInput(int digit) {
+    final selected = _selectedCell;
+    if (selected == null) return false;
+    final (row, col) = selected;
+
+    if (noteMode) {
+      return toggleNote(row, col, digit);
+    }
+    return setValue(row, col, digit);
+  }
+
+  /// Clears the currently selected cell.
+  bool clearSelected() {
+    final selected = _selectedCell;
+    if (selected == null) return false;
+    final (row, col) = selected;
+    return clearCell(row, col);
+  }
+
   /// Toggles a note digit in the selected cell.
   bool toggleNote(int row, int col, int digit) {
     final cell = _currentBoard.getCell(row, col);
