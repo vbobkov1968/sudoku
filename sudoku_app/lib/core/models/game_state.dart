@@ -28,6 +28,9 @@ class GameState {
   bool get canUndo => _undoStack.isNotEmpty;
   bool get canRedo => _redoStack.isNotEmpty;
 
+  /// Returns true if the board is completely filled with no conflicts.
+  bool get isWin => SudokuValidator.isWin(_currentBoard.toInts());
+
   /// Gets the currently selected cell position, null if none selected.
   (int, int)? get selectedCell => _selectedCell;
 

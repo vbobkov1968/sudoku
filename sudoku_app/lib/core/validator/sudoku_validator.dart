@@ -46,6 +46,19 @@ class SudokuValidator {
     return conflicts;
   }
 
+  /// Returns true if the board is completely filled and has no conflicts.
+  /// This means the player has won the game.
+  static bool isWin(List<List<int>> board) {
+    // Check if all cells are filled
+    for (var row = 0; row < 9; row++) {
+      for (var col = 0; col < 9; col++) {
+        if (board[row][col] == 0) return false;
+      }
+    }
+    // Check for any conflicts
+    return getConflicts(board).isEmpty;
+  }
+
   static bool _isPositionValid(
     List<List<int>> board,
     int row,

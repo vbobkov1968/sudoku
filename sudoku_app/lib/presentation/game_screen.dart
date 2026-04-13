@@ -146,8 +146,8 @@ class _GameScreenState extends State<GameScreen> {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceEvenly,
               children: [
                 IconButton(
                   icon: Icon(
