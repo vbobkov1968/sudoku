@@ -157,8 +157,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(gameState.noteMode, isTrue);
 
-    final digit = 5;
-    final digitFinder = find.byKey(ValueKey('number_pad_$digit'));
+    const digit = 5;
+    final digitFinder = find.byKey(const ValueKey('number_pad_$digit'));
     await tester.tap(digitFinder);
     await tester.pumpAndSettle();
 
