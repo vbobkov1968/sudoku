@@ -16,31 +16,34 @@ class SudokuGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final conflicts = gameState.conflictCells;
-    return AspectRatio(
-      aspectRatio: 1.0,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: GridView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 9,
-            childAspectRatio: 1.0,
+    return Semantics(
+      label: 'Sudoku puzzle grid',
+      child: AspectRatio(
+        aspectRatio: 1.0,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1.5),
+            borderRadius: BorderRadius.circular(8),
           ),
-          itemCount: 81,
-          itemBuilder: (context, index) {
-            final row = index ~/ 9;
-            final col = index % 9;
-            return SudokuCell(
-              cell: gameState.currentBoard.getCell(row, col),
-              isSelected: gameState.selectedCell == (row, col),
-              isHighlighted: _isHighlighted(row, col, gameState.selectedCell),
-              isConflict: conflicts.contains((row, col)),
-              onTap: () => onCellTap?.call(row, col),
-            );
-          },
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 9,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: 81,
+            itemBuilder: (context, index) {
+              final row = index ~/ 9;
+              final col = index % 9;
+              return SudokuCell(
+                cell: gameState.currentBoard.getCell(row, col),
+                isSelected: gameState.selectedCell == (row, col),
+                isHighlighted: _isHighlighted(row, col, gameState.selectedCell),
+                isConflict: conflicts.contains((row, col)),
+                onTap: () => onCellTap?.call(row, col),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -72,6 +75,19 @@ class SudokuCell extends StatelessWidget {
     this.onTap,
   });
 
+  String _semanticsLabel() {
+    final pos = 'Row ${cell.row + 1}, Column ${cell.col + 1}';
+    if (isConflict) return '$pos. Conflict: ${cell.value}.';
+    if (cell.value != null) {
+      return cell.isGiven ? '$pos. Given: ${cell.value}.' : '$pos. Entered: ${cell.value}.';
+    }
+    if (cell.notes.isNotEmpty) {
+      final sorted = cell.notes.toList()..sort();
+      return '$pos. Notes: ${sorted.join(', ')}.';
+    }
+    return '$pos. Empty.';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -92,21 +108,27 @@ class SudokuCell extends StatelessWidget {
 
     final borderColor = colorScheme.outline;
 
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border(
-            top:    BorderSide(color: borderColor, width: cell.row % 3 == 0 ? 1.5 : 0.3),
-            left:   BorderSide(color: borderColor, width: cell.col % 3 == 0 ? 1.5 : 0.3),
-            right:  BorderSide(color: borderColor, width: (cell.col + 1) % 3 == 0 ? 1.5 : 0.3),
-            bottom: BorderSide(color: borderColor, width: (cell.row + 1) % 3 == 0 ? 1.5 : 0.3),
+    return Semantics(
+      label: _semanticsLabel(),
+      selected: isSelected,
+      button: true,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            border: Border(
+              top:    BorderSide(color: borderColor, width: cell.row % 3 == 0 ? 1.5 : 0.3),
+              left:   BorderSide(color: borderColor, width: cell.col % 3 == 0 ? 1.5 : 0.3),
+              right:  BorderSide(color: borderColor, width: (cell.col + 1) % 3 == 0 ? 1.5 : 0.3),
+              bottom: BorderSide(color: borderColor, width: (cell.row + 1) % 3 == 0 ? 1.5 : 0.3),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: _buildCellContent(theme),
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: _buildCellContent(theme),
+          ),
         ),
       ),
     );
@@ -158,7 +180,7 @@ class SudokuCell extends StatelessWidget {
                   hasNote ? digit.toString() : '',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: hasNote
-                        ? theme.colorScheme.onSurfaceVariant.withOpacity(0.8)
+                        ? theme.colorScheme.onSurfaceVariant
                         : Colors.transparent,
                     fontSize: 9,
                     fontWeight: FontWeight.w400,

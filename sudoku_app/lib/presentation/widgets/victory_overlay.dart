@@ -25,7 +25,7 @@ class _VictoryOverlayState extends State<VictoryOverlay>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 200),
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _scale = Tween<double>(begin: 0.88, end: 1.0).animate(
@@ -45,9 +45,12 @@ class _VictoryOverlayState extends State<VictoryOverlay>
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return FadeTransition(
-      opacity: _fade,
-      child: GestureDetector(
+    return Semantics(
+      liveRegion: true,
+      label: 'Puzzle complete. Congratulations!',
+      child: FadeTransition(
+        opacity: _fade,
+        child: GestureDetector(
         onTap: widget.onContinue,
         behavior: HitTestBehavior.opaque,
         child: Container(
@@ -112,6 +115,7 @@ class _VictoryOverlayState extends State<VictoryOverlay>
           ),
         ),
       ),
+    ),
     );
   }
 }
