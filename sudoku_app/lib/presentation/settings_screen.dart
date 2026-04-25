@@ -14,20 +14,6 @@ class SettingsDialog extends StatelessWidget {
         builder: (_) => SettingsDialog(notifier: AppSettingsScope.read(context)),
       );
 
-  static String _difficultyLabel(Difficulty d, AppLocalizations l10n) {
-    switch (d) {
-      case Difficulty.easy:   return l10n.difficultyEasy;
-      case Difficulty.medium: return l10n.difficultyMedium;
-      case Difficulty.hard:   return l10n.difficultyHard;
-      case Difficulty.expert: return l10n.difficultyExpert;
-    }
-  }
-
-  static const _segmentStyle = ButtonStyle(
-    visualDensity: VisualDensity.compact,
-    textStyle: MaterialStatePropertyAll(TextStyle(fontSize: 12)),
-  );
-
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppSettings>(
@@ -35,7 +21,6 @@ class SettingsDialog extends StatelessWidget {
       builder: (context, settings, _) {
         final l10n = AppLocalizations.of(context)!;
         return AlertDialog(
-          // Smaller inset so the dialog can use more of a narrow window.
           insetPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           title: Row(
@@ -56,80 +41,151 @@ class SettingsDialog extends StatelessWidget {
               ),
             ],
           ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
           content: SizedBox(
-            width: 460,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            width: 400,
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionLabel(l10n.theme),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<ThemeMode>(
-                    showSelectedIcon: false,
-                    segments: [
-                      ButtonSegment(
-                          value: ThemeMode.light,
-                          label: Text(l10n.themeLight)),
-                      ButtonSegment(
-                          value: ThemeMode.dark, label: Text(l10n.themeDark)),
-                      ButtonSegment(
-                          value: ThemeMode.system,
-                          label: Text(l10n.themeSystem)),
-                    ],
-                    selected: {settings.themeMode},
-                    onSelectionChanged: (s) =>
-                        notifier.update(settings.withTheme(s.first)),
-                    style: _segmentStyle,
-                  ),
+                Expanded(
+                  child: _SettingsColumn(label: l10n.theme, children: [
+                    _RadioItem<ThemeMode>(
+                      label: l10n.themeLight,
+                      value: ThemeMode.light,
+                      groupValue: settings.themeMode,
+                      onChanged: (v) =>
+                          notifier.update(settings.withTheme(v)),
+                    ),
+                    _RadioItem<ThemeMode>(
+                      label: l10n.themeDark,
+                      value: ThemeMode.dark,
+                      groupValue: settings.themeMode,
+                      onChanged: (v) =>
+                          notifier.update(settings.withTheme(v)),
+                    ),
+                    _RadioItem<ThemeMode>(
+                      label: l10n.themeSystem,
+                      value: ThemeMode.system,
+                      groupValue: settings.themeMode,
+                      onChanged: (v) =>
+                          notifier.update(settings.withTheme(v)),
+                    ),
+                  ]),
                 ),
-                const SizedBox(height: 20),
-                _SectionLabel(l10n.language),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<String>(
-                    showSelectedIcon: false,
-                    segments: [
-                      ButtonSegment(
-                          value: 'en', label: Text(l10n.languageEnglish)),
-                      ButtonSegment(
-                          value: 'ru', label: Text(l10n.languageRussian)),
-                    ],
-                    selected: {settings.locale.languageCode},
-                    onSelectionChanged: (s) =>
-                        notifier.update(settings.withLocale(Locale(s.first))),
-                    style: _segmentStyle,
-                  ),
+                Expanded(
+                  child: _SettingsColumn(label: l10n.language, children: [
+                    _RadioItem<String>(
+                      label: l10n.languageEnglish,
+                      value: 'en',
+                      groupValue: settings.locale.languageCode,
+                      onChanged: (v) =>
+                          notifier.update(settings.withLocale(Locale(v))),
+                    ),
+                    _RadioItem<String>(
+                      label: l10n.languageRussian,
+                      value: 'ru',
+                      groupValue: settings.locale.languageCode,
+                      onChanged: (v) =>
+                          notifier.update(settings.withLocale(Locale(v))),
+                    ),
+                  ]),
                 ),
-                const SizedBox(height: 20),
-                _SectionLabel(l10n.difficulty),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    for (final d in Difficulty.values)
-                      ChoiceChip(
-                        label: Text(_difficultyLabel(d, l10n)),
-                        selected: settings.difficulty == d,
-                        showCheckmark: false,
-                        onSelected: (_) =>
-                            notifier.update(settings.withDifficulty(d)),
-                        labelStyle: const TextStyle(fontSize: 12),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                  ],
+                Expanded(
+                  child: _SettingsColumn(label: l10n.difficulty, children: [
+                    _RadioItem<Difficulty>(
+                      label: l10n.difficultyEasy,
+                      value: Difficulty.easy,
+                      groupValue: settings.difficulty,
+                      onChanged: (v) =>
+                          notifier.update(settings.withDifficulty(v)),
+                    ),
+                    _RadioItem<Difficulty>(
+                      label: l10n.difficultyMedium,
+                      value: Difficulty.medium,
+                      groupValue: settings.difficulty,
+                      onChanged: (v) =>
+                          notifier.update(settings.withDifficulty(v)),
+                    ),
+                    _RadioItem<Difficulty>(
+                      label: l10n.difficultyHard,
+                      value: Difficulty.hard,
+                      groupValue: settings.difficulty,
+                      onChanged: (v) =>
+                          notifier.update(settings.withDifficulty(v)),
+                    ),
+                    _RadioItem<Difficulty>(
+                      label: l10n.difficultyExpert,
+                      value: Difficulty.expert,
+                      groupValue: settings.difficulty,
+                      onChanged: (v) =>
+                          notifier.update(settings.withDifficulty(v)),
+                    ),
+                  ]),
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           ),
           actionsPadding: EdgeInsets.zero,
         );
       },
+    );
+  }
+}
+
+class _SettingsColumn extends StatelessWidget {
+  final String label;
+  final List<Widget> children;
+
+  const _SettingsColumn({required this.label, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _SectionLabel(label),
+        const SizedBox(height: 6),
+        ...children,
+      ],
+    );
+  }
+}
+
+class _RadioItem<T> extends StatelessWidget {
+  final String label;
+  final T value;
+  final T groupValue;
+  final void Function(T) onChanged;
+
+  const _RadioItem({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Radio<T>(
+            value: value,
+            groupValue: groupValue,
+            onChanged: (_) => onChanged(value),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+          ),
+          const SizedBox(width: 2),
+          Flexible(
+            child: Text(label, style: const TextStyle(fontSize: 13)),
+          ),
+        ],
+      ),
     );
   }
 }
