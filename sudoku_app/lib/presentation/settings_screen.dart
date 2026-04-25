@@ -14,10 +14,18 @@ class SettingsDialog extends StatelessWidget {
         builder: (_) => SettingsDialog(notifier: AppSettingsScope.read(context)),
       );
 
-  // Compact style: no checkmark icon, so full width goes to the label text.
+  static String _difficultyLabel(Difficulty d, AppLocalizations l10n) {
+    switch (d) {
+      case Difficulty.easy:   return l10n.difficultyEasy;
+      case Difficulty.medium: return l10n.difficultyMedium;
+      case Difficulty.hard:   return l10n.difficultyHard;
+      case Difficulty.expert: return l10n.difficultyExpert;
+    }
+  }
+
   static const _segmentStyle = ButtonStyle(
     visualDensity: VisualDensity.compact,
-    textStyle: MaterialStatePropertyAll(TextStyle(fontSize: 13)),
+    textStyle: MaterialStatePropertyAll(TextStyle(fontSize: 12)),
   );
 
   @override
@@ -99,29 +107,21 @@ class SettingsDialog extends StatelessWidget {
                 const SizedBox(height: 20),
                 _SectionLabel(l10n.difficulty),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<Difficulty>(
-                    showSelectedIcon: false,
-                    segments: [
-                      ButtonSegment(
-                          value: Difficulty.easy,
-                          label: Text(l10n.difficultyEasy)),
-                      ButtonSegment(
-                          value: Difficulty.medium,
-                          label: Text(l10n.difficultyMedium)),
-                      ButtonSegment(
-                          value: Difficulty.hard,
-                          label: Text(l10n.difficultyHard)),
-                      ButtonSegment(
-                          value: Difficulty.expert,
-                          label: Text(l10n.difficultyExpert)),
-                    ],
-                    selected: {settings.difficulty},
-                    onSelectionChanged: (s) =>
-                        notifier.update(settings.withDifficulty(s.first)),
-                    style: _segmentStyle,
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    for (final d in Difficulty.values)
+                      ChoiceChip(
+                        label: Text(_difficultyLabel(d, l10n)),
+                        selected: settings.difficulty == d,
+                        showCheckmark: false,
+                        onSelected: (_) =>
+                            notifier.update(settings.withDifficulty(d)),
+                        labelStyle: const TextStyle(fontSize: 12),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 20),
               ],
