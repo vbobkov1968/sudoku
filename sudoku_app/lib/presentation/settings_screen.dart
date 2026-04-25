@@ -113,10 +113,11 @@ class SettingsDialog extends StatelessWidget {
                     style: _segmentStyle,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
