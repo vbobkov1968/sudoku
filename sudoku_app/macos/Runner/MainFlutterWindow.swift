@@ -7,7 +7,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
   //   vOffset = topPadding (52) + gap (16) + toolbar (64) + gap (12) + numpad (192) + bottomPad (24)
   private static let hOffset: CGFloat = 48
   private static let vOffset: CGFloat = 360
-  private static let minGrid: CGFloat = 280
+  private static let minGrid: CGFloat = 320
 
   static var menuChannel: FlutterMethodChannel?
 

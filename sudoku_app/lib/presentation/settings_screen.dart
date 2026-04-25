@@ -171,7 +171,6 @@ class _RadioItem<T> extends StatelessWidget {
     return GestureDetector(
       onTap: () => onChanged(value),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Radio<T>(
             value: value,
@@ -181,8 +180,8 @@ class _RadioItem<T> extends StatelessWidget {
             visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
           ),
           const SizedBox(width: 2),
-          Flexible(
-            child: Text(label, style: const TextStyle(fontSize: 13)),
+          Expanded(
+            child: Text(label, style: const TextStyle(fontSize: 12)),
           ),
         ],
       ),
