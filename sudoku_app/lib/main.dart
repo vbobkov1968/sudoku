@@ -8,6 +8,7 @@ import 'core/localization/app_locale.dart';
 import 'core/generator/puzzle_generator.dart';
 import 'core/models/game_state.dart';
 import 'core/models/difficulty.dart';
+import 'data/persistence/game_persistence.dart';
 import 'presentation/theme/app_theme.dart';
 import 'presentation/game_screen.dart';
 
@@ -25,27 +26,43 @@ void main() async {
     }
   }
 
-  runApp(const SudokuApp());
-}
+  final saved = await GamePersistence.load();
 
-class SudokuApp extends StatelessWidget {
-  const SudokuApp({super.key});
+  final GameState initialState;
+  final Difficulty initialDifficulty;
 
-  @override
-  Widget build(BuildContext context) {
-    // Generate a sample easy puzzle for demonstration
-    final generator = PuzzleGenerator(seed: 42); // Fixed seed for consistent demo
-    final puzzle = generator.generate(Difficulty.easy);
-    final gameState = GameState(
+  if (saved != null) {
+    initialState = saved.state;
+    initialDifficulty = saved.difficulty;
+  } else {
+    initialDifficulty = Difficulty.easy;
+    final puzzle = PuzzleGenerator(seed: DateTime.now().millisecondsSinceEpoch)
+        .generate(initialDifficulty);
+    initialState = GameState(
       initialBoard: puzzle.puzzle,
       solutionBoard: puzzle.solution,
     );
+  }
 
+  runApp(SudokuApp(initialState: initialState, initialDifficulty: initialDifficulty));
+}
+
+class SudokuApp extends StatelessWidget {
+  final GameState initialState;
+  final Difficulty initialDifficulty;
+
+  const SudokuApp({
+    super.key,
+    required this.initialState,
+    required this.initialDifficulty,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sudoku',
       debugShowCheckedModeBanner: false,
 
-      // Localization setup
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -54,13 +71,11 @@ class SudokuApp extends StatelessWidget {
       supportedLocales: supportedLocales,
       localeResolutionCallback: localeResolutionCallback,
 
-      // Theme
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
 
-      // Game screen
-      home: GameScreen(gameState: gameState),
+      home: GameScreen(gameState: initialState, difficulty: initialDifficulty),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../core/models/game_state.dart';
 import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
+import '../data/persistence/game_persistence.dart';
 import 'widgets/number_pad.dart';
 import 'widgets/sudoku_grid.dart';
 import 'widgets/victory_overlay.dart';
@@ -13,10 +14,12 @@ import 'widgets/victory_overlay.dart';
 /// The main game screen that displays the Sudoku grid.
 class GameScreen extends StatefulWidget {
   final GameState gameState;
+  final Difficulty difficulty;
 
   const GameScreen({
     super.key,
     required this.gameState,
+    required this.difficulty,
   });
 
   @override
@@ -25,6 +28,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late GameState _gameState;
+  late Difficulty _difficulty;
   bool _showVictory = false;
   final FocusNode _focusNode = FocusNode();
 
@@ -32,6 +36,7 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _gameState = widget.gameState;
+    _difficulty = widget.difficulty;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focusNode.requestFocus();
@@ -240,11 +245,14 @@ class _GameScreenState extends State<GameScreen> {
     return null;
   }
 
+  void _autosave() => GamePersistence.save(_gameState, _difficulty);
+
   void _onDigitPressed(int digit) {
     setState(() {
       _gameState.applyInput(digit);
       if (_gameState.isWin) _showVictory = true;
     });
+    _autosave();
   }
 
   void _dismissVictory() {
@@ -253,6 +261,7 @@ class _GameScreenState extends State<GameScreen> {
 
   void _onClearPressed() {
     setState(() => _gameState.clearSelected());
+    _autosave();
   }
 
   void _onCellTap(int row, int col) {
@@ -261,14 +270,17 @@ class _GameScreenState extends State<GameScreen> {
 
   void _toggleNoteMode() {
     setState(() => _gameState.toggleNoteMode());
+    _autosave();
   }
 
   void _undo() {
     setState(() => _gameState.undo());
+    _autosave();
   }
 
   void _redo() {
     setState(() => _gameState.redo());
+    _autosave();
   }
 
   void _resetPuzzle() {
@@ -280,15 +292,18 @@ class _GameScreenState extends State<GameScreen> {
       _showVictory = false;
       _focusNode.requestFocus();
     });
+    _autosave();
   }
 
   void _newGame() {
     setState(() {
-      final generator = PuzzleGenerator(seed: DateTime.now().millisecondsSinceEpoch);
-      final puzzle = generator.generate(Difficulty.easy);
+      _difficulty = Difficulty.easy;
+      final puzzle = PuzzleGenerator(seed: DateTime.now().millisecondsSinceEpoch)
+          .generate(_difficulty);
       _gameState = GameState(initialBoard: puzzle.puzzle, solutionBoard: puzzle.solution);
       _showVictory = false;
       _focusNode.requestFocus();
     });
+    _autosave();
   }
 }
