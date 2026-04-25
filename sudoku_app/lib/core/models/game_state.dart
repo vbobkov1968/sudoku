@@ -46,14 +46,16 @@ class GameState {
     _selectedCell = null;
   }
 
+  /// Returns the set of cells that currently violate Sudoku rules.
+  Set<(int, int)> get conflictCells =>
+      SudokuValidator.getConflicts(_currentBoard.toInts()).toSet();
+
   /// Applies a normal digit entry to the board.
-  /// Returns true when the move is valid and applied.
+  /// Conflicts (row/col/block duplicates) are allowed and shown in the UI.
+  /// Returns true when the cell was writable and the value is in range.
   bool setValue(int row, int col, int value) {
     final cell = _currentBoard.getCell(row, col);
     if (cell.isGiven || value < 1 || value > 9) return false;
-    final boardInts = _currentBoard.toInts();
-    boardInts[row][col] = value;
-    if (!SudokuValidator.isValidMove(boardInts, row, col, value)) return false;
 
     _recordState();
     _currentBoard = _currentBoard.copyWithCell(row, col, cell.withValue(value).clearNotes());

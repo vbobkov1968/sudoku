@@ -6,16 +6,22 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:sudoku_app/core/generator/puzzle_generator.dart';
+import 'package:sudoku_app/core/models/difficulty.dart';
+import 'package:sudoku_app/core/models/game_state.dart';
 import 'package:sudoku_app/main.dart';
 
 void main() {
-  testWidgets('Placeholder home screen is shown', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const SudokuApp());
-
-    // Verify that the placeholder home screen is displayed.
-    expect(find.text('Sudoku'), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
+  testWidgets('SudokuApp renders without crashing', (WidgetTester tester) async {
+    final puzzle = PuzzleGenerator(seed: 42).generate(Difficulty.easy);
+    final state = GameState(
+      initialBoard: puzzle.puzzle,
+      solutionBoard: puzzle.solution,
+    );
+    await tester.pumpWidget(SudokuApp(
+      initialState: state,
+      initialDifficulty: Difficulty.easy,
+    ));
+    expect(find.byType(SudokuApp), findsOneWidget);
   });
 }

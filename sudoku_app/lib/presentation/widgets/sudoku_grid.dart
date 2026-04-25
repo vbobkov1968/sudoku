@@ -15,6 +15,7 @@ class SudokuGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final conflicts = gameState.conflictCells;
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
@@ -36,6 +37,7 @@ class SudokuGrid extends StatelessWidget {
               cell: gameState.currentBoard.getCell(row, col),
               isSelected: gameState.selectedCell == (row, col),
               isHighlighted: _isHighlighted(row, col, gameState.selectedCell),
+              isConflict: conflicts.contains((row, col)),
               onTap: () => onCellTap?.call(row, col),
             );
           },
@@ -58,6 +60,7 @@ class SudokuCell extends StatelessWidget {
   final Cell cell;
   final bool isSelected;
   final bool isHighlighted;
+  final bool isConflict;
   final VoidCallback? onTap;
 
   const SudokuCell({
@@ -65,6 +68,7 @@ class SudokuCell extends StatelessWidget {
     required this.cell,
     this.isSelected = false,
     this.isHighlighted = false,
+    this.isConflict = false,
     this.onTap,
   });
 
@@ -74,7 +78,11 @@ class SudokuCell extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     Color backgroundColor;
-    if (isSelected) {
+    if (isConflict && isSelected) {
+      backgroundColor = colorScheme.errorContainer;
+    } else if (isConflict) {
+      backgroundColor = colorScheme.errorContainer.withOpacity(0.5);
+    } else if (isSelected) {
       backgroundColor = colorScheme.primaryContainer;
     } else if (isHighlighted) {
       backgroundColor = colorScheme.surfaceVariant.withOpacity(0.3);
@@ -106,15 +114,21 @@ class SudokuCell extends StatelessWidget {
 
   Widget _buildCellContent(ThemeData theme) {
     if (cell.value != null) {
+      final Color textColor;
+      if (isConflict) {
+        textColor = theme.colorScheme.error;
+      } else if (cell.isGiven) {
+        textColor = theme.colorScheme.onSurface;
+      } else {
+        textColor = theme.colorScheme.primary;
+      }
       return FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
           cell.value.toString(),
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: cell.isGiven ? FontWeight.w600 : FontWeight.w400,
-            color: cell.isGiven
-                ? theme.colorScheme.onSurface
-                : theme.colorScheme.primary,
+            color: textColor,
           ),
         ),
       );

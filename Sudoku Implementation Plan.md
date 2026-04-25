@@ -82,7 +82,7 @@
 | 3.2 | Виртуальный нумпад + поддержка физической клавиатуры | `2.3`, `3.5` | @frontend | ✅ | Critical | 2026-04-26 | 2026-04-13 | Реализовано: NumberPad widget, KeyboardListener, тесты пройдены |
 | 3.3 | UI режима заметок (мелкие кандидаты, переключатель) | `2.7` | @frontend | ✅ | Medium | 2026-04-29 | 2026-04-13 | Реализовано: toggle button, keyboard 'N', improved notes grid, тесты |
 | 4.1 | Responsive-лейаут (desktop sidebar / mobile bottom sheet) | `3.1`, `3.4`, `5.4` | @frontend | ✅ | High | 2026-04-25 | 2026-04-25 | Desktop: column layout + macOS frosted glass window |
-| 4.2 | Real-time валидация + ручная кнопка «Проверить» | `2.6` | @frontend | 🟡 | Medium | 2026-04-25 | — | В работе |
+| 4.2 | Real-time валидация + ручная кнопка «Проверить» | `2.6` | @frontend | ✅ | Medium | 2026-04-25 | 2026-04-25 | Конфликты row/col/block подсвечиваются красным в реальном времени |
 | 4.3 | Victory-оверлей, навигация «Новая игра» | `2.10` | @frontend | ✅ | High | 2026-04-25 | 2026-04-25 | VictoryOverlay с анимацией, кнопки New Game / Continue |
 | 4.4 | a11y-лейблы, контраст ≥4.5:1, анимации ≤200мс | `3.6`, `3.7`, `4.4` | @qa_design | 🔴 | Medium | 2026-05-06 | 2026-05-07 | v1.1 приоритет |
 | 5.1 | Интеграция Isar/Drift, сериализация состояния | `4.2`, `5.2` | @data_dev | ✅ | High | 2026-04-25 | 2026-04-25 | shared_preferences + JSON; Board/notes/difficulty сериализованы |
