@@ -8,6 +8,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
   private static let hOffset: CGFloat = 48
   private static let vOffset: CGFloat = 360
   private static let minGrid: CGFloat = 320
+  private static let sizeKey  = "com.sudoku.windowSize"
 
   static var menuChannel: FlutterMethodChannel?
 
@@ -22,7 +23,14 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     let screen = NSScreen.main ?? NSScreen.screens[0]
     let visible = screen.visibleFrame
     let maxGrid = min(visible.width - Self.hOffset, visible.height - Self.vOffset)
-    let initialGrid = min(max(maxGrid * 0.75, Self.minGrid), 520)
+
+    let initialGrid: CGFloat
+    if let saved = Self.loadSavedGrid(maxGrid: maxGrid) {
+      initialGrid = saved
+    } else {
+      initialGrid = min(max(maxGrid * 0.75, Self.minGrid), 520)
+    }
+
     let initialSize = NSSize(width: initialGrid + Self.hOffset,
                              height: initialGrid + Self.vOffset)
     let minSize    = NSSize(width: Self.minGrid + Self.hOffset,
@@ -77,6 +85,19 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     super.awakeFromNib()
   }
 
+  // MARK: - Persistence
+
+  private static func loadSavedGrid(maxGrid: CGFloat) -> CGFloat? {
+    let raw = UserDefaults.standard.double(forKey: sizeKey)
+    guard raw > 0 else { return nil }
+    return min(max(CGFloat(raw), minGrid), maxGrid)
+  }
+
+  private func saveWindowSize() {
+    let grid = lastFrameSize.width - Self.hOffset
+    UserDefaults.standard.set(Double(grid), forKey: Self.sizeKey)
+  }
+
   // MARK: - NSWindowDelegate
 
   func windowDidBecomeKey(_ notification: Notification) {
@@ -87,6 +108,14 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
       layer.isOpaque = false
       layer.backgroundColor = CGColor.clear
     }
+  }
+
+  func windowDidEndLiveResize(_ notification: Notification) {
+    saveWindowSize()
+  }
+
+  func windowWillClose(_ notification: Notification) {
+    saveWindowSize()
   }
 
   func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
