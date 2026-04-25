@@ -36,6 +36,16 @@ class SettingsDialog extends StatelessWidget {
                   size: 20, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 10),
               Text(l10n.settings),
+              const Spacer(),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(64, 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  textStyle: const TextStyle(fontSize: 13),
+                ),
+                child: Text(l10n.done),
+              ),
             ],
           ),
           contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -117,13 +127,7 @@ class SettingsDialog extends StatelessWidget {
               ],
             ),
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.done),
-            ),
-          ],
+          actionsPadding: EdgeInsets.zero,
         );
       },
     );
