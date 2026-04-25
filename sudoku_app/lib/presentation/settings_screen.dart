@@ -14,6 +14,14 @@ class SettingsDialog extends StatelessWidget {
         builder: (_) => SettingsDialog(notifier: AppSettingsScope.read(context)),
       );
 
+  static const _segmentStyle = ButtonStyle(
+    visualDensity: VisualDensity.compact,
+    textStyle: MaterialStatePropertyAll(TextStyle(fontSize: 13)),
+    padding: MaterialStatePropertyAll(
+      EdgeInsets.symmetric(horizontal: 12),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppSettings>(
@@ -31,7 +39,7 @@ class SettingsDialog extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           content: SizedBox(
-            width: 360,
+            width: 460,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,24 +53,20 @@ class SettingsDialog extends StatelessWidget {
                       ButtonSegment(
                         value: ThemeMode.light,
                         label: Text(l10n.themeLight),
-                        icon: const Icon(Icons.light_mode_outlined),
                       ),
                       ButtonSegment(
                         value: ThemeMode.dark,
                         label: Text(l10n.themeDark),
-                        icon: const Icon(Icons.dark_mode_outlined),
                       ),
                       ButtonSegment(
                         value: ThemeMode.system,
                         label: Text(l10n.themeSystem),
-                        icon: const Icon(Icons.brightness_auto_outlined),
                       ),
                     ],
                     selected: {settings.themeMode},
                     onSelectionChanged: (s) =>
                         notifier.update(settings.withTheme(s.first)),
-                    style: const ButtonStyle(
-                        visualDensity: VisualDensity.compact),
+                    style: _segmentStyle,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -72,16 +76,13 @@ class SettingsDialog extends StatelessWidget {
                   width: double.infinity,
                   child: SegmentedButton<String>(
                     segments: [
-                      ButtonSegment(
-                          value: 'en', label: Text(l10n.languageEnglish)),
-                      ButtonSegment(
-                          value: 'ru', label: Text(l10n.languageRussian)),
+                      ButtonSegment(value: 'en', label: Text(l10n.languageEnglish)),
+                      ButtonSegment(value: 'ru', label: Text(l10n.languageRussian)),
                     ],
                     selected: {settings.locale.languageCode},
                     onSelectionChanged: (s) =>
                         notifier.update(settings.withLocale(Locale(s.first))),
-                    style: const ButtonStyle(
-                        visualDensity: VisualDensity.compact),
+                    style: _segmentStyle,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -107,8 +108,7 @@ class SettingsDialog extends StatelessWidget {
                     selected: {settings.difficulty},
                     onSelectionChanged: (s) =>
                         notifier.update(settings.withDifficulty(s.first)),
-                    style: const ButtonStyle(
-                        visualDensity: VisualDensity.compact),
+                    style: _segmentStyle,
                   ),
                 ),
                 const SizedBox(height: 8),
