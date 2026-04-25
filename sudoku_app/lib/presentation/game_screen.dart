@@ -149,11 +149,16 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  Color _cardColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xCC1C1C1E) : Colors.grey.shade50;
+  }
+
   Widget _buildToolbar(BuildContext context) {
     return SizedBox(
       width: 280,
       child: Card(
-        color: Colors.grey.shade50,
+        color: _cardColor(context),
         elevation: 1,
         shadowColor: Colors.black26,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -218,7 +223,7 @@ class _GameScreenState extends State<GameScreen> {
 
   Widget _buildNumpadCard() {
     return Card(
-      color: Colors.grey.shade50,
+      color: _cardColor(context),
       elevation: 1,
       shadowColor: Colors.black26,
       child: Padding(
