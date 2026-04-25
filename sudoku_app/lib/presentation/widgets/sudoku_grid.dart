@@ -93,6 +93,7 @@ class SudokuCell extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final isDark = theme.brightness == Brightness.dark;
     Color backgroundColor;
     if (isConflict && isSelected) {
       backgroundColor = colorScheme.errorContainer;
@@ -101,7 +102,11 @@ class SudokuCell extends StatelessWidget {
     } else if (isSelected) {
       backgroundColor = colorScheme.primaryContainer;
     } else if (isHighlighted) {
-      backgroundColor = colorScheme.surfaceVariant.withOpacity(0.3);
+      // In dark mode use an opaque surfaceVariant so the light wallpaper
+      // doesn't bleed through the semi-transparent layer.
+      backgroundColor = isDark
+          ? colorScheme.surfaceVariant
+          : colorScheme.surfaceVariant.withOpacity(0.3);
     } else {
       backgroundColor = colorScheme.surface;
     }
