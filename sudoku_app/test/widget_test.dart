@@ -7,6 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sudoku_app/core/generator/puzzle_generator.dart';
+import 'package:sudoku_app/core/models/app_settings.dart';
 import 'package:sudoku_app/core/models/difficulty.dart';
 import 'package:sudoku_app/core/models/game_state.dart';
 import 'package:sudoku_app/main.dart';
@@ -21,6 +22,7 @@ void main() {
     await tester.pumpWidget(SudokuApp(
       initialState: state,
       initialDifficulty: Difficulty.easy,
+      initialSettings: const AppSettings(),
     ));
     expect(find.byType(SudokuApp), findsOneWidget);
   });

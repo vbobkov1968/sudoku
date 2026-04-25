@@ -7,6 +7,8 @@ import '../core/models/game_state.dart';
 import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
 import '../data/persistence/game_persistence.dart';
+import 'app_settings_scope.dart';
+import 'settings_screen.dart';
 import 'widgets/number_pad.dart';
 import 'widgets/sudoku_grid.dart';
 import 'widgets/victory_overlay.dart';
@@ -197,6 +199,11 @@ class _GameScreenState extends State<GameScreen> {
                   onPressed: _newGame,
                   tooltip: 'New game',
                 ),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () => SettingsDialog.show(context),
+                  tooltip: 'Settings',
+                ),
               ],
             ),
           ),
@@ -296,8 +303,9 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _newGame() {
+    final difficulty = AppSettingsScope.read(context).value.difficulty;
     setState(() {
-      _difficulty = Difficulty.easy;
+      _difficulty = difficulty;
       final puzzle = PuzzleGenerator(seed: DateTime.now().millisecondsSinceEpoch)
           .generate(_difficulty);
       _gameState = GameState(initialBoard: puzzle.puzzle, solutionBoard: puzzle.solution);
