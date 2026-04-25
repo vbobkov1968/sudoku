@@ -9,6 +9,8 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
   private static let vOffset: CGFloat = 360
   private static let minGrid: CGFloat = 280
 
+  static var menuChannel: FlutterMethodChannel?
+
   private var lastFrameSize = NSSize.zero
   private var flutterVC: FlutterViewController?
   private var didFixLayers = false
@@ -66,6 +68,12 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     self.contentView = wrapper
 
     RegisterGeneratedPlugins(registry: vc)
+
+    MainFlutterWindow.menuChannel = FlutterMethodChannel(
+      name: "com.sudoku/menu",
+      binaryMessenger: vc.engine.binaryMessenger
+    )
+
     super.awakeFromNib()
   }
 

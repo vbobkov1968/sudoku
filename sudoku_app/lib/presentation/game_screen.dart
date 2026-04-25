@@ -29,6 +29,8 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
+  static const _menuChannel = MethodChannel('com.sudoku/menu');
+
   late GameState _gameState;
   late Difficulty _difficulty;
   bool _showVictory = false;
@@ -39,15 +41,22 @@ class _GameScreenState extends State<GameScreen> {
     super.initState();
     _gameState = widget.gameState;
     _difficulty = widget.difficulty;
+    if (Platform.isMacOS) {
+      _menuChannel.setMethodCallHandler(_handleMenuCall);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focusNode.requestFocus();
-      }
+      if (mounted) _focusNode.requestFocus();
     });
+  }
+
+  Future<void> _handleMenuCall(MethodCall call) async {
+    if (!mounted) return;
+    if (call.method == 'openSettings') SettingsDialog.show(context);
   }
 
   @override
   void dispose() {
+    if (Platform.isMacOS) _menuChannel.setMethodCallHandler(null);
     _focusNode.dispose();
     super.dispose();
   }
@@ -198,11 +207,6 @@ class _GameScreenState extends State<GameScreen> {
                   icon: const Icon(Icons.casino_outlined),
                   onPressed: _newGame,
                   tooltip: 'New game',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () => SettingsDialog.show(context),
-                  tooltip: 'Settings',
                 ),
               ],
             ),
