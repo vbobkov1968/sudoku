@@ -118,9 +118,9 @@ class SettingsDialog extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(
+            FilledButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
+              child: Text(l10n.done),
             ),
           ],
         );
