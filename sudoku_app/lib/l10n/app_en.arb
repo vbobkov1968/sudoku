@@ -5,7 +5,7 @@
     "description": "Application title"
   },
   "newGame": "New Game",
-  "continue": "Continue",
+  "continueGame": "Continue",
   "settings": "Settings",
   "difficulty": "Difficulty",
   "difficultyEasy": "Easy",

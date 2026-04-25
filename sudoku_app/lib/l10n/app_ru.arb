@@ -5,7 +5,7 @@
     "description": "Название приложения"
   },
   "newGame": "Новая игра",
-  "continue": "Продолжить",
+  "continueGame": "Продолжить",
   "settings": "Настройки",
   "difficulty": "Сложность",
   "difficultyEasy": "Лёгкий",
