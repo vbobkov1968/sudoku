@@ -58,7 +58,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     blur.material       = .underWindowBackground
     blur.blendingMode   = .behindWindow
     blur.state          = .active
-    blur.alphaValue     = 0.88
+    blur.alphaValue     = 0.75
     blur.autoresizingMask = [.width, .height]
     wrapper.addSubview(blur)
 

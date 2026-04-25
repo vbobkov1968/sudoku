@@ -19,7 +19,7 @@ abstract final class AppTheme {
     brightness: Brightness.dark,
     // Semi-transparent dark overlay so the NSVisualEffectView blur
     // reads as a dark frosted-glass rather than the lighter system default.
-    scaffoldBackgroundColor: const Color(0x88000000),
+    scaffoldBackgroundColor: const Color(0xAA000000),
     canvasColor: Colors.transparent,
   );
 }
