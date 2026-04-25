@@ -65,6 +65,7 @@ class _DifficultyPickerDialogState extends State<DifficultyPickerDialog> {
                 ))
             .toList(),
       ),
+      actionsAlignment: MainAxisAlignment.center,
       actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       actions: [
         TextButton(
