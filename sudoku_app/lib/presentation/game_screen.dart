@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,6 +8,7 @@ import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
 import 'widgets/number_pad.dart';
 import 'widgets/sudoku_grid.dart';
+import 'widgets/victory_overlay.dart';
 
 /// The main game screen that displays the Sudoku grid.
 class GameScreen extends StatefulWidget {
@@ -22,6 +25,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late GameState _gameState;
+  bool _showVictory = false;
   final FocusNode _focusNode = FocusNode();
 
   @override
@@ -48,59 +52,60 @@ class _GameScreenState extends State<GameScreen> {
       autofocus: true,
       onKeyEvent: _handleKeyEvent,
       child: Scaffold(
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            // Switch to mobile layout when window is too narrow OR when grid would be too small
-            final isDesktop = constraints.maxWidth > 900 && constraints.maxHeight > 650;
-            return isDesktop ? _buildDesktopLayout() : _buildMobileLayout();
-          },
+        body: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Switch to mobile layout when window is too narrow OR when grid would be too small
+                final isDesktop = !Platform.isAndroid;
+                return isDesktop ? _buildDesktopLayout() : _buildMobileLayout();
+              },
+            ),
+            if (_showVictory)
+              VictoryOverlay(
+                onNewGame: _newGame,
+                onContinue: _dismissVictory,
+              ),
+          ],
         ),
       ),
     );
   }
 
-  /// Desktop layout: grid on the left, controls + numpad on the right
+  /// Desktop layout: grid centred, toolbar + numpad pinned to bottom centre.
   Widget _buildDesktopLayout() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Flexible(
-            flex: 5,
-            child: AspectRatio(
-              aspectRatio: 1.0,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 450, minHeight: 450),
+    final topPadding = Platform.isMacOS ? 52.0 : 24.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(height: topPadding),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1.0,
                 child: SudokuGrid(gameState: _gameState, onCellTap: _onCellTap),
               ),
             ),
           ),
-          const SizedBox(width: 24),
-          SizedBox(
-            width: 280,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildToolbar(context),
-                const SizedBox(height: 16),
-                _buildNumpadCard(),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        _buildToolbar(context),
+        const SizedBox(height: 12),
+        SizedBox(width: 280, child: _buildNumpadCard()),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
   /// Mobile layout: grid on top, controls + numpad below
   Widget _buildMobileLayout() {
+    final topPadding = Platform.isMacOS ? 52.0 : 16.0;
     return SingleChildScrollView(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.fromLTRB(16, topPadding, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -236,7 +241,14 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _onDigitPressed(int digit) {
-    setState(() => _gameState.applyInput(digit));
+    setState(() {
+      _gameState.applyInput(digit);
+      if (_gameState.isWin) _showVictory = true;
+    });
+  }
+
+  void _dismissVictory() {
+    setState(() => _showVictory = false);
   }
 
   void _onClearPressed() {
@@ -265,6 +277,7 @@ class _GameScreenState extends State<GameScreen> {
         initialBoard: _gameState.initialBoard,
         solutionBoard: _gameState.solutionBoard,
       );
+      _showVictory = false;
       _focusNode.requestFocus();
     });
   }
@@ -274,6 +287,7 @@ class _GameScreenState extends State<GameScreen> {
       final generator = PuzzleGenerator(seed: DateTime.now().millisecondsSinceEpoch);
       final puzzle = generator.generate(Difficulty.easy);
       _gameState = GameState(initialBoard: puzzle.puzzle, solutionBoard: puzzle.solution);
+      _showVictory = false;
       _focusNode.requestFocus();
     });
   }

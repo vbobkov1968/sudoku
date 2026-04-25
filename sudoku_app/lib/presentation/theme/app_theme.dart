@@ -9,11 +9,15 @@ abstract final class AppTheme {
     useMaterial3: _useMaterial3,
     colorSchemeSeed: _seedColor,
     brightness: Brightness.light,
+    scaffoldBackgroundColor: Colors.transparent,
+    canvasColor: Colors.transparent,
   );
 
   static final darkTheme = ThemeData(
     useMaterial3: _useMaterial3,
     colorSchemeSeed: _seedColor,
     brightness: Brightness.dark,
+    scaffoldBackgroundColor: Colors.transparent,
+    canvasColor: Colors.transparent,
   );
 }
