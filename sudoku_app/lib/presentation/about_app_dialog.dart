@@ -14,10 +14,13 @@ class AboutAppDialog extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isRu = Localizations.localeOf(context).languageCode == 'ru';
     final author = isRu ? 'Вячеслав Бобков' : 'Viacheslav Bobkov';
+    final copyright = isRu
+        ? '© 2026 $author.\nВсе права защищены.'
+        : 'Copyright © 2026 $author.\nAll rights reserved.';
 
     return AlertDialog(
-      contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      actionsPadding: EdgeInsets.zero,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -45,20 +48,19 @@ class AboutAppDialog extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Copyright © 2026 $author.\nAll rights reserved.',
+            copyright,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.close),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.done),
-        ),
-      ],
     );
   }
 }
