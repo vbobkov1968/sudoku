@@ -181,7 +181,7 @@ class _RadioItem<T> extends StatelessWidget {
           ),
           const SizedBox(width: 2),
           Expanded(
-            child: Text(label, style: const TextStyle(fontSize: 12)),
+            child: Text(label, style: const TextStyle(fontSize: 11)),
           ),
         ],
       ),
