@@ -8,6 +8,7 @@ import '../core/models/game_state.dart';
 import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
 import '../data/persistence/game_persistence.dart';
+import 'about_app_dialog.dart';
 import 'app_settings_scope.dart';
 import 'difficulty_picker_dialog.dart';
 import 'settings_screen.dart';
@@ -54,6 +55,7 @@ class _GameScreenState extends State<GameScreen> {
   Future<void> _handleMenuCall(MethodCall call) async {
     if (!mounted) return;
     if (call.method == 'openSettings') SettingsDialog.show(context);
+    if (call.method == 'openAbout') AboutAppDialog.show(context);
   }
 
   @override
@@ -111,13 +113,7 @@ class _GameScreenState extends State<GameScreen> {
     if (value == 'settings') {
       SettingsDialog.show(context);
     } else if (value == 'about') {
-      final l10n = AppLocalizations.of(context)!;
-      showAboutDialog(
-        context: context,
-        applicationName: l10n.appTitle,
-        applicationVersion: '1.0.0',
-        applicationIcon: const Icon(Icons.grid_4x4_outlined, size: 48),
-      );
+      AboutAppDialog.show(context);
     }
   }
 
