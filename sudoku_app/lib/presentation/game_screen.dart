@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../core/models/game_state.dart';
 import '../core/generator/puzzle_generator.dart';
@@ -156,6 +157,9 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildToolbar(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final undoShortcut = Platform.isMacOS ? '⌘Z' : 'Ctrl+Z';
+    final redoShortcut = Platform.isMacOS ? '⇧⌘Z' : 'Shift+Ctrl+Z';
     return SizedBox(
       width: 280,
       child: Card(
@@ -182,7 +186,7 @@ class _GameScreenState extends State<GameScreen> {
                     color: _gameState.noteMode ? Theme.of(context).colorScheme.primary : null,
                   ),
                   onPressed: _toggleNoteMode,
-                  tooltip: _gameState.noteMode ? 'Exit Note Mode (N)' : 'Enter Note Mode (N)',
+                  tooltip: _gameState.noteMode ? l10n.exitNoteMode : l10n.enterNoteMode,
                   style: _gameState.noteMode
                       ? IconButton.styleFrom(
                           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
@@ -192,27 +196,27 @@ class _GameScreenState extends State<GameScreen> {
                 IconButton(
                   icon: const Icon(Icons.undo_outlined),
                   onPressed: _gameState.canUndo ? _undo : null,
-                  tooltip: 'Undo',
+                  tooltip: '${l10n.undo} ($undoShortcut)',
                 ),
                 IconButton(
                   icon: const Icon(Icons.redo_outlined),
                   onPressed: _gameState.canRedo ? _redo : null,
-                  tooltip: 'Redo',
+                  tooltip: '${l10n.redo} ($redoShortcut)',
                 ),
                 IconButton(
                   icon: const Icon(Icons.backspace_outlined),
                   onPressed: _onClearPressed,
-                  tooltip: 'Clear cell',
+                  tooltip: l10n.clearCell,
                 ),
                 IconButton(
                   icon: const Icon(Icons.replay_outlined),
                   onPressed: _resetPuzzle,
-                  tooltip: 'Reset puzzle',
+                  tooltip: l10n.resetPuzzle,
                 ),
                 IconButton(
                   icon: const Icon(Icons.casino_outlined),
                   onPressed: _newGame,
-                  tooltip: 'New game',
+                  tooltip: l10n.newGame,
                 ),
               ],
             ),
@@ -237,6 +241,21 @@ class _GameScreenState extends State<GameScreen> {
   void _handleKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return;
     final key = event.logicalKey;
+
+    final isCmd = Platform.isMacOS
+        ? HardwareKeyboard.instance.isMetaPressed
+        : HardwareKeyboard.instance.isControlPressed;
+    final isShift = HardwareKeyboard.instance.isShiftPressed;
+
+    if (isCmd && key == LogicalKeyboardKey.keyZ) {
+      if (isShift) {
+        if (_gameState.canRedo) _redo();
+      } else {
+        if (_gameState.canUndo) _undo();
+      }
+      return;
+    }
+
     if (key == LogicalKeyboardKey.keyN) {
       _toggleNoteMode();
       return;

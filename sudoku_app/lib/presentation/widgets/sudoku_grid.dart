@@ -16,33 +16,51 @@ class SudokuGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final conflicts = gameState.conflictCells;
+    final colorScheme = Theme.of(context).colorScheme;
     return Semantics(
       label: 'Sudoku puzzle grid',
       child: AspectRatio(
         aspectRatio: 1.0,
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1.5),
+            border: Border.all(color: colorScheme.outline, width: 2.0),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 9,
-              childAspectRatio: 1.0,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Stack(
+              children: [
+                GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 9,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: 81,
+                  itemBuilder: (context, index) {
+                    final row = index ~/ 9;
+                    final col = index % 9;
+                    return SudokuCell(
+                      cell: gameState.currentBoard.getCell(row, col),
+                      isSelected: gameState.selectedCell == (row, col),
+                      isHighlighted: _isHighlighted(row, col, gameState.selectedCell),
+                      isConflict: conflicts.contains((row, col)),
+                      onTap: () => onCellTap?.call(row, col),
+                    );
+                  },
+                ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: _GridLinePainter(
+                        thinColor: colorScheme.outlineVariant,
+                        thickColor: colorScheme.outline,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            itemCount: 81,
-            itemBuilder: (context, index) {
-              final row = index ~/ 9;
-              final col = index % 9;
-              return SudokuCell(
-                cell: gameState.currentBoard.getCell(row, col),
-                isSelected: gameState.selectedCell == (row, col),
-                isHighlighted: _isHighlighted(row, col, gameState.selectedCell),
-                isConflict: conflicts.contains((row, col)),
-                onTap: () => onCellTap?.call(row, col),
-              );
-            },
           ),
         ),
       ),
@@ -50,12 +68,44 @@ class SudokuGrid extends StatelessWidget {
   }
 
   bool _isHighlighted(int row, int col, (int, int)? selected) {
+
     if (selected == null) return false;
     final (selectedRow, selectedCol) = selected;
     return row == selectedRow ||
            col == selectedCol ||
            (row ~/ 3 == selectedRow ~/ 3 && col ~/ 3 == selectedCol ~/ 3);
   }
+}
+
+class _GridLinePainter extends CustomPainter {
+  final Color thinColor;
+  final Color thickColor;
+
+  const _GridLinePainter({required this.thinColor, required this.thickColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final thin = Paint()
+      ..color = thinColor
+      ..strokeWidth = 1.0
+      ..isAntiAlias = false;
+
+    final thick = Paint()
+      ..color = thickColor
+      ..strokeWidth = 2.0
+      ..isAntiAlias = false;
+
+    for (int i = 1; i < 9; i++) {
+      final paint = i % 3 == 0 ? thick : thin;
+      final pos = (size.width * i / 9).roundToDouble();
+      canvas.drawLine(Offset(pos, 0), Offset(pos, size.height), paint);
+      canvas.drawLine(Offset(0, pos), Offset(size.width, pos), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridLinePainter old) =>
+      thinColor != old.thinColor || thickColor != old.thickColor;
 }
 
 /// A single cell in the Sudoku grid.
@@ -111,8 +161,6 @@ class SudokuCell extends StatelessWidget {
       backgroundColor = colorScheme.surface;
     }
 
-    final borderColor = colorScheme.outline;
-
     return Semantics(
       label: _semanticsLabel(),
       selected: isSelected,
@@ -121,15 +169,7 @@ class SudokuCell extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            border: Border(
-              top:    BorderSide(color: borderColor, width: cell.row % 3 == 0 ? 1.5 : 0.3),
-              left:   BorderSide(color: borderColor, width: cell.col % 3 == 0 ? 1.5 : 0.3),
-              right:  BorderSide(color: borderColor, width: (cell.col + 1) % 3 == 0 ? 1.5 : 0.3),
-              bottom: BorderSide(color: borderColor, width: (cell.row + 1) % 3 == 0 ? 1.5 : 0.3),
-            ),
-          ),
+          decoration: BoxDecoration(color: backgroundColor),
           child: Padding(
             padding: const EdgeInsets.all(2),
             child: _buildCellContent(theme),
