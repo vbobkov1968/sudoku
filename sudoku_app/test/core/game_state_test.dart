@@ -71,6 +71,70 @@ void main() {
       expect(gameState.undo(), isTrue);
       expect(gameState.currentBoard.getValue(target.row, target.col), equals(value));
     });
+
+    test('undo/redo history supports at least 50 steps', () {
+      // Expert removes 54 cells, giving enough empty cells for 50 unique moves
+      final puzzle = PuzzleGenerator(seed: 123).generate(Difficulty.expert);
+      final gs = GameState(
+        initialBoard: puzzle.puzzle,
+        solutionBoard: puzzle.solution,
+      );
+      final emptyCells = puzzle.puzzle.allCells.where((c) => !c.isGiven).toList();
+      expect(emptyCells.length, greaterThanOrEqualTo(50),
+          reason: 'Expert difficulty should have 50+ empty cells');
+
+      var moveCount = 0;
+      for (final cell in emptyCells) {
+        if (moveCount >= 50) break;
+        gs.toggleNote(cell.row, cell.col, 1);
+        moveCount++;
+      }
+
+      expect(moveCount, 50);
+      expect(gs.canUndo, isTrue);
+
+      for (var i = 0; i < 50; i++) {
+        expect(gs.undo(), isTrue, reason: 'Undo step ${i + 1} should succeed');
+      }
+      expect(gs.canUndo, isFalse);
+    });
+
+    test('redo stack is cleared after new move', () {
+      final firstMove = _findFirstValidMove(initialBoard);
+      expect(firstMove, isNotNull);
+      final (target, value) = firstMove!;
+
+      gameState.setValue(target.row, target.col, value);
+      gameState.undo();
+      expect(gameState.canRedo, isTrue);
+
+      final secondCell = initialBoard.allCells.firstWhere(
+        (c) => !c.isGiven && !(c.row == target.row && c.col == target.col),
+      );
+      gameState.toggleNote(secondCell.row, secondCell.col, 3);
+      expect(gameState.canRedo, isFalse);
+    });
+
+    test('history is capped at historyLimit', () {
+      const limit = 10;
+      final gs = GameState(
+        initialBoard: initialBoard,
+        solutionBoard: solutionBoard,
+        historyLimit: limit,
+      );
+      final emptyCells =
+          initialBoard.allCells.where((c) => !c.isGiven).take(limit + 5).toList();
+
+      for (final cell in emptyCells) {
+        gs.toggleNote(cell.row, cell.col, 1);
+      }
+
+      var undoneCount = 0;
+      while (gs.undo()) {
+        undoneCount++;
+      }
+      expect(undoneCount, limit);
+    });
   });
 }
 
