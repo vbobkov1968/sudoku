@@ -56,16 +56,20 @@ class _NumberPadButton extends StatelessWidget {
           color: borderColor.withOpacity(0.3),
           width: 1.0,
         ),
-        textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w400,
-        ),
         padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
       ),
       onPressed: onPressed,
-      child: Text(label),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w500,
+          height: 1.0,
+        ),
+      ),
     );
   }
 }

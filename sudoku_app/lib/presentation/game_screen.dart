@@ -65,16 +65,33 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return KeyboardListener(
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: _handleKeyEvent,
       child: Scaffold(
+        backgroundColor: Platform.isAndroid
+            ? Theme.of(context).colorScheme.surface
+            : null,
+        appBar: Platform.isAndroid
+            ? AppBar(
+                title: Text(l10n.appTitle),
+                actions: [
+                  PopupMenuButton<String>(
+                    onSelected: (value) => _handleAndroidMenu(value, context),
+                    itemBuilder: (ctx) => [
+                      PopupMenuItem(value: 'settings', child: Text(l10n.settings)),
+                      PopupMenuItem(value: 'about', child: Text(l10n.about)),
+                    ],
+                  ),
+                ],
+              )
+            : null,
         body: Stack(
           children: [
             LayoutBuilder(
               builder: (context, constraints) {
-                // Switch to mobile layout when window is too narrow OR when grid would be too small
                 final isDesktop = !Platform.isAndroid;
                 return isDesktop ? _buildDesktopLayout() : _buildMobileLayout();
               },
@@ -88,6 +105,20 @@ class _GameScreenState extends State<GameScreen> {
         ),
       ),
     );
+  }
+
+  void _handleAndroidMenu(String value, BuildContext context) {
+    if (value == 'settings') {
+      SettingsDialog.show(context);
+    } else if (value == 'about') {
+      final l10n = AppLocalizations.of(context)!;
+      showAboutDialog(
+        context: context,
+        applicationName: l10n.appTitle,
+        applicationVersion: '1.0.0',
+        applicationIcon: const Icon(Icons.grid_4x4_outlined, size: 48),
+      );
+    }
   }
 
   /// Desktop layout: grid centred, toolbar + numpad pinned to bottom centre.
@@ -117,36 +148,29 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  /// Mobile layout: grid on top, controls + numpad below
+  /// Mobile layout: grid, toolbar and numpad evenly distributed vertically.
   Widget _buildMobileLayout() {
-    final topPadding = Platform.isMacOS ? 52.0 : 16.0;
-    return SingleChildScrollView(
-      child: Center(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, topPadding, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final gridSize = constraints.maxWidth.clamp(250.0, 400.0);
-                  return SizedBox(
-                    width: gridSize,
-                    height: gridSize,
-                    child: SudokuGrid(gameState: _gameState, onCellTap: _onCellTap),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildToolbar(context),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 280,
-                child: _buildNumpadCard(),
-              ),
-            ],
-          ),
-        ),
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final availableWidth = constraints.maxWidth;
+          final gridSize = (availableWidth - 32).clamp(200.0, 500.0);
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(
+                  width: gridSize,
+                  height: gridSize,
+                  child: SudokuGrid(gameState: _gameState, onCellTap: _onCellTap),
+                ),
+                _buildToolbar(context, width: null),
+                _buildNumpadCard(),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -156,74 +180,72 @@ class _GameScreenState extends State<GameScreen> {
     return isDark ? const Color(0xCC1C1C1E) : Colors.grey.shade50;
   }
 
-  Widget _buildToolbar(BuildContext context) {
+  Widget _buildToolbar(BuildContext context, {double? width = 280}) {
     final l10n = AppLocalizations.of(context)!;
     final undoShortcut = Platform.isMacOS ? '⌘Z' : 'Ctrl+Z';
     final redoShortcut = Platform.isMacOS ? '⇧⌘Z' : 'Shift+Ctrl+Z';
-    return SizedBox(
-      width: 280,
-      child: Card(
-        color: _cardColor(context),
-        elevation: 1,
-        shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            iconTheme: IconThemeData(
-              color: Theme.of(context).colorScheme.onSurface,
-              size: 22,
-            ),
-            disabledColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+    final card = Card(
+      color: _cardColor(context),
+      elevation: 1,
+      shadowColor: Colors.black26,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          iconTheme: IconThemeData(
+            color: Theme.of(context).colorScheme.onSurface,
+            size: 22,
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-            child: Wrap(
-              alignment: WrapAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _gameState.noteMode ? Icons.edit_note_outlined : Icons.edit_off_outlined,
-                    color: _gameState.noteMode ? Theme.of(context).colorScheme.primary : null,
-                  ),
-                  onPressed: _toggleNoteMode,
-                  tooltip: _gameState.noteMode ? l10n.exitNoteMode : l10n.enterNoteMode,
-                  style: _gameState.noteMode
-                      ? IconButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        )
-                      : null,
+          disabledColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: Icon(
+                  _gameState.noteMode ? Icons.edit_note_outlined : Icons.edit_off_outlined,
+                  color: _gameState.noteMode ? Theme.of(context).colorScheme.primary : null,
                 ),
-                IconButton(
-                  icon: const Icon(Icons.undo_outlined),
-                  onPressed: _gameState.canUndo ? _undo : null,
-                  tooltip: '${l10n.undo} ($undoShortcut)',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.redo_outlined),
-                  onPressed: _gameState.canRedo ? _redo : null,
-                  tooltip: '${l10n.redo} ($redoShortcut)',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.backspace_outlined),
-                  onPressed: _onClearPressed,
-                  tooltip: l10n.clearCell,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.replay_outlined),
-                  onPressed: _resetPuzzle,
-                  tooltip: l10n.resetPuzzle,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.casino_outlined),
-                  onPressed: _newGame,
-                  tooltip: l10n.newGame,
-                ),
-              ],
-            ),
+                onPressed: _toggleNoteMode,
+                tooltip: _gameState.noteMode ? l10n.exitNoteMode : l10n.enterNoteMode,
+                style: _gameState.noteMode
+                    ? IconButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      )
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.undo_outlined),
+                onPressed: _gameState.canUndo ? _undo : null,
+                tooltip: '${l10n.undo} ($undoShortcut)',
+              ),
+              IconButton(
+                icon: const Icon(Icons.redo_outlined),
+                onPressed: _gameState.canRedo ? _redo : null,
+                tooltip: '${l10n.redo} ($redoShortcut)',
+              ),
+              IconButton(
+                icon: const Icon(Icons.backspace_outlined),
+                onPressed: _onClearPressed,
+                tooltip: l10n.clearCell,
+              ),
+              IconButton(
+                icon: const Icon(Icons.replay_outlined),
+                onPressed: _resetPuzzle,
+                tooltip: l10n.resetPuzzle,
+              ),
+              IconButton(
+                icon: const Icon(Icons.casino_outlined),
+                onPressed: _newGame,
+                tooltip: l10n.newGame,
+              ),
+            ],
           ),
         ),
       ),
     );
+    return width != null ? SizedBox(width: width, child: card) : card;
   }
 
   Widget _buildNumpadCard() {
