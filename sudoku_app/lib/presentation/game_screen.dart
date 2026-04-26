@@ -8,6 +8,7 @@ import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
 import '../data/persistence/game_persistence.dart';
 import 'app_settings_scope.dart';
+import 'difficulty_picker_dialog.dart';
 import 'settings_screen.dart';
 import 'widgets/number_pad.dart';
 import 'widgets/sudoku_grid.dart';
@@ -311,10 +312,13 @@ class _GameScreenState extends State<GameScreen> {
     _autosave();
   }
 
-  void _newGame() {
-    final difficulty = AppSettingsScope.read(context).value.difficulty;
+  Future<void> _newGame() async {
+    final notifier = AppSettingsScope.read(context);
+    final chosen = await DifficultyPickerDialog.show(context, notifier.value.difficulty);
+    if (chosen == null || !mounted) return;
+    notifier.update(notifier.value.withDifficulty(chosen));
     setState(() {
-      _difficulty = difficulty;
+      _difficulty = chosen;
       final puzzle = PuzzleGenerator(seed: DateTime.now().millisecondsSinceEpoch)
           .generate(_difficulty);
       _gameState = GameState(initialBoard: puzzle.puzzle, solutionBoard: puzzle.solution);
