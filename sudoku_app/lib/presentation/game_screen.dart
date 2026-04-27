@@ -57,6 +57,15 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (Platform.isMacOS) {
+      final lang = Localizations.localeOf(context).languageCode;
+      _menuChannel.invokeMethod<void>('setLocale', lang).catchError((_) {});
+    }
+  }
+
   Future<void> _handleMenuCall(MethodCall call) async {
     if (!mounted) return;
     if (call.method == 'openSettings') SettingsDialog.show(context);

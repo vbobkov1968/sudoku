@@ -82,8 +82,8 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
       binaryMessenger: vc.engine.binaryMessenger
     )
     MainFlutterWindow.menuChannel?.setMethodCallHandler { call, result in
-      if call.method == "setLocale", let lang = call.arguments as? String, lang == "ru" {
-        (NSApp.delegate as? AppDelegate)?.localizeMenuForRussian()
+      if call.method == "setLocale", let lang = call.arguments as? String {
+        (NSApp.delegate as? AppDelegate)?.applyLocale(lang)
       }
       result(nil)
     }
