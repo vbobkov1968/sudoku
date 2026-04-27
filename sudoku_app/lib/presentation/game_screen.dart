@@ -48,7 +48,12 @@ class _GameScreenState extends State<GameScreen> {
       _menuChannel.setMethodCallHandler(_handleMenuCall);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusNode.requestFocus();
+      if (!mounted) return;
+      _focusNode.requestFocus();
+      if (Platform.isMacOS) {
+        final lang = Localizations.localeOf(context).languageCode;
+        _menuChannel.invokeMethod<void>('setLocale', lang).catchError((_) {});
+      }
     });
   }
 

@@ -12,8 +12,12 @@ class AppDelegate: FlutterAppDelegate {
     localizeMenuForRussian()
   }
 
-  private func localizeMenuForRussian() {
-    guard Locale.current.languageCode == "ru" else { return }
+  func localizeMenuForRussian() {
+    // shared_preferences stores values with "flutter." prefix in UserDefaults.
+    let lang = UserDefaults.standard.string(forKey: "flutter.settings_locale")
+            ?? Locale.current.languageCode
+            ?? "en"
+    guard lang == "ru" else { return }
     guard let appMenu = NSApp.mainMenu?.item(at: 0)?.submenu else { return }
     let items = appMenu.items
     // 0: About, 1: sep, 2: Preferences, 3: sep, 4: Services,

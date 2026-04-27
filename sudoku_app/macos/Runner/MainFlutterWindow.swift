@@ -81,6 +81,12 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
       name: "com.sudoku/menu",
       binaryMessenger: vc.engine.binaryMessenger
     )
+    MainFlutterWindow.menuChannel?.setMethodCallHandler { call, result in
+      if call.method == "setLocale", let lang = call.arguments as? String, lang == "ru" {
+        (NSApp.delegate as? AppDelegate)?.localizeMenuForRussian()
+      }
+      result(nil)
+    }
 
     super.awakeFromNib()
   }
