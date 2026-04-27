@@ -41,8 +41,26 @@ class AppDelegate: FlutterAppDelegate {
   override func applicationDidFinishLaunching(_ notification: Notification) {
     super.applicationDidFinishLaunching(notification)
     saveOriginalAppleMenuTitles()
+    addHelpMenuItem()
     let lang = UserDefaults.standard.string(forKey: "flutter.settings_locale") ?? "en"
     applyLocale(lang)
+  }
+
+  private func addHelpMenuItem() {
+    guard let helpMenu = NSApp.mainMenu?.items.first(where: {
+      $0.title == "Help" || $0.title == "Справка"
+    })?.submenu else { return }
+    let item = NSMenuItem(
+      title: "Sudoku Help",
+      action: #selector(openHelp(_:)),
+      keyEquivalent: "?"
+    )
+    item.keyEquivalentModifierMask = .command
+    item.target = self
+    helpMenu.insertItem(item, at: 0)
+    if helpMenu.numberOfItems > 1 {
+      helpMenu.insertItem(.separator(), at: 1)
+    }
   }
 
   override func applicationWillUpdate(_ notification: Notification) {
@@ -135,6 +153,11 @@ class AppDelegate: FlutterAppDelegate {
       if t == "Help" || t == "Справка" {
         item.title = toRussian ? "Справка" : "Help"
         item.submenu?.title = toRussian ? "Справка" : "Help"
+        item.submenu?.items.first.map {
+          if $0.action == #selector(openHelp(_:)) {
+            $0.title = toRussian ? "Справка по Судоку" : "Sudoku Help"
+          }
+        }
       }
     }
   }
@@ -147,5 +170,9 @@ class AppDelegate: FlutterAppDelegate {
 
   @IBAction func openAbout(_ sender: Any) {
     MainFlutterWindow.menuChannel?.invokeMethod("openAbout", arguments: nil)
+  }
+
+  @objc func openHelp(_ sender: Any) {
+    MainFlutterWindow.menuChannel?.invokeMethod("openHelp", arguments: nil)
   }
 }

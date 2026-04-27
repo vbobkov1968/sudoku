@@ -13,6 +13,7 @@ import '../core/models/difficulty.dart';
 import '../data/persistence/game_persistence.dart';
 import 'about_app_dialog.dart';
 import 'app_settings_scope.dart';
+import 'help_dialog.dart';
 import 'difficulty_picker_dialog.dart';
 import 'settings_screen.dart';
 import 'widgets/number_pad.dart';
@@ -81,6 +82,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     if (call.method == 'openSettings') SettingsDialog.show(context);
     if (call.method == 'openAbout') AboutAppDialog.show(context);
+    if (call.method == 'openHelp') HelpDialog.show(context);
   }
 
   @override
@@ -125,6 +127,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     itemBuilder: (ctx) => [
                       PopupMenuItem(value: 'settings', child: Text(l10n.settings)),
                       PopupMenuItem(value: 'about', child: Text(l10n.about)),
+                      PopupMenuItem(value: 'help', child: Text(l10n.help)),
                     ],
                   ),
                 ],
@@ -154,6 +157,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       SettingsDialog.show(context);
     } else if (value == 'about') {
       AboutAppDialog.show(context);
+    } else if (value == 'help') {
+      HelpDialog.show(context);
     }
   }
 
