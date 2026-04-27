@@ -13,54 +13,68 @@ class HelpDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return AlertDialog(
-      title: Text(l10n.help),
-      scrollable: true,
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-      content: SizedBox(
-        width: 480,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-              _Section(title: l10n.helpRulesTitle, children: [
-                _Body(l10n.helpRulesText),
-                const SizedBox(height: 10),
-                _SubTitle(l10n.helpHowFormedTitle),
-                _Body(l10n.helpHowFormedText),
-                const SizedBox(height: 10),
-                _SubTitle(l10n.helpDifficultyTitle),
-                _Body(l10n.helpDifficultyText),
-              ]),
-              _Section(title: l10n.helpToolbarTitle, children: [
-                _ToolbarRow(Icons.edit_note_outlined,    l10n.notes,           l10n.helpToolbarNotesDesc),
-                _ToolbarRow(Icons.undo_outlined,         '${l10n.undo} / ${l10n.redo}', l10n.helpToolbarUndoDesc),
-                _ToolbarRow(Icons.backspace_outlined,    l10n.clearCell,       l10n.helpToolbarClearDesc),
-                _ToolbarRow(Icons.replay_outlined,       l10n.resetPuzzle,     l10n.helpToolbarResetDesc),
-                _ToolbarRow(Icons.casino_outlined,       l10n.newGame,         l10n.helpToolbarNewGameDesc),
-                _ToolbarRow(Icons.flag_outlined,         l10n.saveMilestone,   l10n.helpToolbarCheckpointSaveDesc),
-                _ToolbarRow(Icons.history,               l10n.restoreMilestone, l10n.helpToolbarCheckpointRestoreDesc),
-              ]),
-              if (Platform.isMacOS)
-                _Section(title: l10n.helpKeyboardTitle, children: [
-                  _KeyboardTable(rows: [
-                    ('1–9',                       l10n.helpKeyboardDigitsDesc),
-                    ('N',                         l10n.helpKeyboardNDesc),
-                    ('↑ ↓ ← →',                  l10n.helpKeyboardArrowsDesc),
-                    ('Backspace / Delete',         l10n.helpKeyboardBackspaceDesc),
-                    ('⌘Z',                        l10n.helpKeyboardUndoDesc),
-                    ('⇧⌘Z',                      l10n.helpKeyboardRedoDesc),
-                  ]),
-                ]),
-              const SizedBox(height: 8),
+    final theme = Theme.of(context);
+    final maxHeight = MediaQuery.of(context).size.height * 0.72;
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.help, style: theme.textTheme.headlineSmall),
+              const SizedBox(height: 12),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Section(title: l10n.helpRulesTitle, children: [
+                        _Body(l10n.helpRulesText),
+                        const SizedBox(height: 10),
+                        _SubTitle(l10n.helpHowFormedTitle),
+                        _Body(l10n.helpHowFormedText),
+                        const SizedBox(height: 10),
+                        _SubTitle(l10n.helpDifficultyTitle),
+                        _Body(l10n.helpDifficultyText),
+                      ]),
+                      _Section(title: l10n.helpToolbarTitle, children: [
+                        _ToolbarRow(Icons.edit_note_outlined,    l10n.notes,                    l10n.helpToolbarNotesDesc),
+                        _ToolbarRow(Icons.undo_outlined,         '${l10n.undo} / ${l10n.redo}', l10n.helpToolbarUndoDesc),
+                        _ToolbarRow(Icons.backspace_outlined,    l10n.clearCell,                l10n.helpToolbarClearDesc),
+                        _ToolbarRow(Icons.replay_outlined,       l10n.resetPuzzle,              l10n.helpToolbarResetDesc),
+                        _ToolbarRow(Icons.casino_outlined,       l10n.newGame,                  l10n.helpToolbarNewGameDesc),
+                        _ToolbarRow(Icons.flag_outlined,         l10n.saveMilestone,            l10n.helpToolbarCheckpointSaveDesc),
+                        _ToolbarRow(Icons.history,               l10n.restoreMilestone,         l10n.helpToolbarCheckpointRestoreDesc),
+                      ]),
+                      if (Platform.isMacOS)
+                        _Section(title: l10n.helpKeyboardTitle, children: [
+                          _KeyboardTable(rows: [
+                            ('1–9',                   l10n.helpKeyboardDigitsDesc),
+                            ('N',                     l10n.helpKeyboardNDesc),
+                            ('↑ ↓ ← →',              l10n.helpKeyboardArrowsDesc),
+                            ('Backspace / Delete',     l10n.helpKeyboardBackspaceDesc),
+                            ('⌘Z',                    l10n.helpKeyboardUndoDesc),
+                            ('⇧⌘Z',                  l10n.helpKeyboardRedoDesc),
+                          ]),
+                        ]),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.close),
+                ),
+              ),
             ],
           ),
         ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.close),
-        ),
-      ],
+      ),
     );
   }
 }
