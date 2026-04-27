@@ -14,10 +14,11 @@ class HelpDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final maxHeight = MediaQuery.of(context).size.height * 0.72;
+    final h = (MediaQuery.of(context).size.height * 0.72).clamp(420.0, 660.0);
     return Dialog(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 520, maxHeight: maxHeight),
+      child: SizedBox(
+        width: 520,
+        height: h,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
           child: Column(
