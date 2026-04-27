@@ -18,6 +18,12 @@ class HelpDialog extends StatefulWidget {
 class _HelpDialogState extends State<HelpDialog> {
   final _scrollController = ScrollController();
 
+  void _scroll(double delta) {
+    final offset = (_scrollController.offset + delta)
+        .clamp(0.0, _scrollController.position.maxScrollExtent);
+    _scrollController.jumpTo(offset);
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -44,11 +50,10 @@ class _HelpDialogState extends State<HelpDialog> {
                 child: Listener(
                   onPointerSignal: (event) {
                     if (event is PointerScrollEvent) {
-                      final offset = (_scrollController.offset + event.scrollDelta.dy)
-                          .clamp(0.0, _scrollController.position.maxScrollExtent);
-                      _scrollController.jumpTo(offset);
+                      _scroll(event.scrollDelta.dy);
                     }
                   },
+                  onPointerPanZoomUpdate: (event) => _scroll(-event.panDelta.dy),
                   child: Scrollbar(
                   controller: _scrollController,
                   thumbVisibility: true,
