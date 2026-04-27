@@ -362,8 +362,45 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       _onClearPressed();
       return;
     }
+    if (_handleArrowKey(key)) return;
     final digit = _logicalKeyToDigit(key);
     if (digit != null) _onDigitPressed(digit);
+  }
+
+  bool _handleArrowKey(LogicalKeyboardKey key) {
+    final sel = _gameState.selectedCell;
+    final int row;
+    final int col;
+    if (sel != null) {
+      (row, col) = sel;
+    } else {
+      // No selection — arrow key picks the first cell
+      if (key == LogicalKeyboardKey.arrowRight ||
+          key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.arrowDown) {
+        setState(() => _gameState.selectCell(0, 0));
+        return true;
+      }
+      return false;
+    }
+
+    int newRow = row;
+    int newCol = col;
+    if (key == LogicalKeyboardKey.arrowRight) {
+      newCol = (col + 1) % 9;
+    } else if (key == LogicalKeyboardKey.arrowLeft) {
+      newCol = (col + 8) % 9;
+    } else if (key == LogicalKeyboardKey.arrowDown) {
+      newRow = (row + 1) % 9;
+    } else if (key == LogicalKeyboardKey.arrowUp) {
+      newRow = (row + 8) % 9;
+    } else {
+      return false;
+    }
+
+    setState(() => _gameState.selectCell(newRow, newCol));
+    return true;
   }
 
   int? _logicalKeyToDigit(LogicalKeyboardKey key) {
