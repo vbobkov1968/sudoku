@@ -47,19 +47,23 @@ class _HelpDialogState extends State<HelpDialog> {
               Text(l10n.help, style: theme.textTheme.headlineSmall),
               const SizedBox(height: 12),
               Expanded(
-                child: Listener(
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    dragDevices: PointerDeviceKind.values.toSet(),
+                    scrollbars: false,
+                  ),
+                  child: Listener(
                   onPointerSignal: (event) {
                     if (event is PointerScrollEvent) {
                       _scroll(event.scrollDelta.dy);
                     }
                   },
-                  onPointerPanZoomUpdate: (event) => _scroll(-event.panDelta.dy),
                   child: Scrollbar(
                   controller: _scrollController,
                   thumbVisibility: true,
                   child: ListView(
                     controller: _scrollController,
-                    physics: const ClampingScrollPhysics(),
+                    physics: const BouncingScrollPhysics(),
                     children: [
                       _Section(title: l10n.helpRulesTitle, children: [
                         _Body(l10n.helpRulesText),
@@ -91,11 +95,12 @@ class _HelpDialogState extends State<HelpDialog> {
                           ]),
                         ]),
                       const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-                ),
-              ),
+                    ],           // ListView children
+                  ),             // ListView
+                ),               // Scrollbar
+                ),               // Listener
+                ),               // ScrollConfiguration
+              ),                 // Expanded
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
