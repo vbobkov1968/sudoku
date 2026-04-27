@@ -3,11 +3,24 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class HelpDialog extends StatelessWidget {
+class HelpDialog extends StatefulWidget {
   const HelpDialog({super.key});
 
   static void show(BuildContext context) {
     showDialog<void>(context: context, builder: (_) => const HelpDialog());
+  }
+
+  @override
+  State<HelpDialog> createState() => _HelpDialogState();
+}
+
+class _HelpDialogState extends State<HelpDialog> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -27,9 +40,12 @@ class HelpDialog extends StatelessWidget {
               Text(l10n.help, style: theme.textTheme.headlineSmall),
               const SizedBox(height: 12),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: true,
+                  child: ListView(
+                    controller: _scrollController,
+                    physics: const ClampingScrollPhysics(),
                     children: [
                       _Section(title: l10n.helpRulesTitle, children: [
                         _Body(l10n.helpRulesText),
