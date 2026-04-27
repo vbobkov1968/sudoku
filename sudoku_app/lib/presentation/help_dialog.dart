@@ -15,14 +15,13 @@ class HelpDialog extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(l10n.help),
+      scrollable: true,
       contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       content: SizedBox(
         width: 480,
-        height: MediaQuery.of(context).size.height * 0.65,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               _Section(title: l10n.helpRulesTitle, children: [
                 _Body(l10n.helpRulesText),
                 const SizedBox(height: 10),
@@ -56,7 +55,6 @@ class HelpDialog extends StatelessWidget {
             ],
           ),
         ),
-      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

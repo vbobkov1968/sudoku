@@ -56,8 +56,7 @@ class AppDelegate: FlutterAppDelegate {
       return
     }
     let title = currentLocale == "ru" ? "Справка по Судоку" : "Sudoku Help"
-    let item = NSMenuItem(title: title, action: #selector(openHelp(_:)), keyEquivalent: "?")
-    item.keyEquivalentModifierMask = .command
+    let item = NSMenuItem(title: title, action: #selector(openHelp(_:)), keyEquivalent: "")
     item.target = self
     helpMenu.addItem(.separator())
     helpMenu.addItem(item)
