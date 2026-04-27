@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -40,7 +41,15 @@ class _HelpDialogState extends State<HelpDialog> {
               Text(l10n.help, style: theme.textTheme.headlineSmall),
               const SizedBox(height: 12),
               Expanded(
-                child: Scrollbar(
+                child: Listener(
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      final offset = (_scrollController.offset + event.scrollDelta.dy)
+                          .clamp(0.0, _scrollController.position.maxScrollExtent);
+                      _scrollController.jumpTo(offset);
+                    }
+                  },
+                  child: Scrollbar(
                   controller: _scrollController,
                   thumbVisibility: true,
                   child: ListView(
@@ -79,6 +88,7 @@ class _HelpDialogState extends State<HelpDialog> {
                       const SizedBox(height: 8),
                     ],
                   ),
+                ),
                 ),
               ),
               Align(
