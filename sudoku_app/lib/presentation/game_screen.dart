@@ -291,7 +291,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               IconButton(
                 constraints: btnSize,
                 icon: const Icon(Icons.flag_outlined),
-                onPressed: _gameState.hasProgress ? _saveMilestone : null,
+                onPressed: _canSaveMilestone ? _saveMilestone : null,
                 tooltip: l10n.saveMilestone,
               ),
               SizedBox.fromSize(
@@ -378,6 +378,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (key == LogicalKeyboardKey.digit9 || key == LogicalKeyboardKey.numpad9) return 9;
     return null;
   }
+
+  bool get _canSaveMilestone =>
+      _gameState.hasProgress &&
+      (_milestones.isEmpty ||
+       _gameState.currentBoard != _milestones.last.board);
 
   void _saveMilestone() {
     setState(() {
