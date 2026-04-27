@@ -10,6 +10,7 @@ import 'core/localization/app_locale.dart';
 import 'core/generator/puzzle_generator.dart';
 import 'core/models/game_state.dart';
 import 'core/models/difficulty.dart';
+import 'core/models/milestone.dart';
 import 'core/models/app_settings.dart';
 import 'data/persistence/game_persistence.dart';
 import 'data/persistence/settings_persistence.dart';
@@ -62,6 +63,7 @@ void main() async {
     initialState: initialState,
     initialDifficulty: initialDifficulty,
     initialSettings: settings,
+    initialMilestones: saved?.milestones ?? [],
   ));
 }
 
@@ -69,12 +71,14 @@ class SudokuApp extends StatefulWidget {
   final GameState initialState;
   final Difficulty initialDifficulty;
   final AppSettings initialSettings;
+  final List<Milestone> initialMilestones;
 
   const SudokuApp({
     super.key,
     required this.initialState,
     required this.initialDifficulty,
     required this.initialSettings,
+    required this.initialMilestones,
   });
 
   @override
@@ -120,6 +124,7 @@ class _SudokuAppState extends State<SudokuApp> {
           home: GameScreen(
             gameState: widget.initialState,
             difficulty: widget.initialDifficulty,
+            milestones: widget.initialMilestones,
           ),
         ),
       ),

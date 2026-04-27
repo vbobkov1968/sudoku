@@ -5,6 +5,10 @@ import 'package:sudoku_app/core/models/difficulty.dart';
 import 'package:sudoku_app/core/models/game_state.dart';
 import 'package:sudoku_app/data/persistence/game_persistence.dart';
 
+import 'package:sudoku_app/core/models/milestone.dart';
+
+const _noMilestones = <Milestone>[];
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -27,7 +31,7 @@ void main() {
     });
 
     test('save and load roundtrip preserves difficulty', () async {
-      await GamePersistence.save(gameState, Difficulty.hard);
+      await GamePersistence.save(gameState, Difficulty.hard, _noMilestones);
       final loaded = await GamePersistence.load();
 
       expect(loaded, isNotNull);
@@ -35,7 +39,7 @@ void main() {
     });
 
     test('save and load roundtrip preserves initial board', () async {
-      await GamePersistence.save(gameState, Difficulty.easy);
+      await GamePersistence.save(gameState, Difficulty.easy, _noMilestones);
       final loaded = await GamePersistence.load();
 
       expect(
@@ -45,7 +49,7 @@ void main() {
     });
 
     test('save and load roundtrip preserves solution board', () async {
-      await GamePersistence.save(gameState, Difficulty.easy);
+      await GamePersistence.save(gameState, Difficulty.easy, _noMilestones);
       final loaded = await GamePersistence.load();
 
       expect(
@@ -69,7 +73,7 @@ void main() {
       }
       gameState.setValue(targetRow!, targetCol!, 3);
 
-      await GamePersistence.save(gameState, Difficulty.easy);
+      await GamePersistence.save(gameState, Difficulty.easy, _noMilestones);
       final loaded = await GamePersistence.load();
 
       expect(
@@ -94,7 +98,7 @@ void main() {
       gameState.toggleNote(targetRow!, targetCol!, 4);
       gameState.toggleNote(targetRow, targetCol, 7);
 
-      await GamePersistence.save(gameState, Difficulty.easy);
+      await GamePersistence.save(gameState, Difficulty.easy, _noMilestones);
       final loaded = await GamePersistence.load();
 
       final cell = loaded!.state.currentBoard.getCell(targetRow, targetCol);
@@ -105,14 +109,14 @@ void main() {
       gameState.toggleNoteMode();
       expect(gameState.noteMode, isTrue);
 
-      await GamePersistence.save(gameState, Difficulty.easy);
+      await GamePersistence.save(gameState, Difficulty.easy, _noMilestones);
       final loaded = await GamePersistence.load();
 
       expect(loaded!.state.noteMode, isTrue);
     });
 
     test('clear removes saved game', () async {
-      await GamePersistence.save(gameState, Difficulty.easy);
+      await GamePersistence.save(gameState, Difficulty.easy, _noMilestones);
       await GamePersistence.clear();
       final loaded = await GamePersistence.load();
 
@@ -120,7 +124,7 @@ void main() {
     });
 
     test('given cells are restored as given', () async {
-      await GamePersistence.save(gameState, Difficulty.easy);
+      await GamePersistence.save(gameState, Difficulty.easy, _noMilestones);
       final loaded = await GamePersistence.load();
 
       final originalGivens = gameState.initialBoard.allCells

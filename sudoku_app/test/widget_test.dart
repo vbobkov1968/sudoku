@@ -23,6 +23,7 @@ void main() {
       initialState: state,
       initialDifficulty: Difficulty.easy,
       initialSettings: const AppSettings(),
+      initialMilestones: const [],
     ));
     expect(find.byType(SudokuApp), findsOneWidget);
   });

@@ -57,5 +57,7 @@
   "winRate": "Win Rate",
   "bestTime": "Best Time",
   "currentStreak": "Current Streak",
-  "longestStreak": "Longest Streak"
+  "longestStreak": "Longest Streak",
+  "saveMilestone": "Save checkpoint",
+  "restoreMilestone": "Restore checkpoint"
 }

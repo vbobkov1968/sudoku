@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../core/models/game_state.dart';
+import '../core/models/milestone.dart';
 import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
 import '../data/persistence/game_persistence.dart';
@@ -20,30 +23,38 @@ import 'widgets/victory_overlay.dart';
 class GameScreen extends StatefulWidget {
   final GameState gameState;
   final Difficulty difficulty;
+  final List<Milestone> milestones;
 
   const GameScreen({
     super.key,
     required this.gameState,
     required this.difficulty,
+    this.milestones = const [],
   });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   static const _menuChannel = MethodChannel('com.sudoku/menu');
 
   late GameState _gameState;
   late Difficulty _difficulty;
   bool _showVictory = false;
   final FocusNode _focusNode = FocusNode();
+  final List<Milestone> _milestones = [];
 
   @override
   void initState() {
     super.initState();
     _gameState = widget.gameState;
     _difficulty = widget.difficulty;
+    _milestones.addAll(widget.milestones);
+    if (Platform.isAndroid) {
+      WidgetsBinding.instance.addObserver(this);
+      WakelockPlus.enable();
+    }
     if (Platform.isMacOS) {
       _menuChannel.setMethodCallHandler(_handleMenuCall);
     }
@@ -73,7 +84,22 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!Platform.isAndroid) return;
+    if (state == AppLifecycleState.resumed) {
+      WakelockPlus.enable();
+    } else if (state == AppLifecycleState.paused ||
+               state == AppLifecycleState.inactive) {
+      WakelockPlus.disable();
+    }
+  }
+
+  @override
   void dispose() {
+    if (Platform.isAndroid) {
+      WidgetsBinding.instance.removeObserver(this);
+      WakelockPlus.disable();
+    }
     if (Platform.isMacOS) _menuChannel.setMethodCallHandler(null);
     _focusNode.dispose();
     super.dispose();
@@ -194,6 +220,11 @@ class _GameScreenState extends State<GameScreen> {
     final l10n = AppLocalizations.of(context)!;
     final undoShortcut = Platform.isMacOS ? '⌘Z' : 'Ctrl+Z';
     final redoShortcut = Platform.isMacOS ? '⇧⌘Z' : 'Shift+Ctrl+Z';
+    final timeFmt = DateFormat('HH:mm:ss');
+
+    // Square constraints keep the ripple circular and prevent overflow for 8 buttons.
+    const btnSize = BoxConstraints.tightFor(width: 32, height: 32);
+
     final card = Card(
       color: _cardColor(context),
       elevation: 1,
@@ -203,9 +234,10 @@ class _GameScreenState extends State<GameScreen> {
         data: Theme.of(context).copyWith(
           iconTheme: IconThemeData(
             color: Theme.of(context).colorScheme.onSurface,
-            size: 22,
+            size: 20,
           ),
           disabledColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
@@ -213,6 +245,7 @@ class _GameScreenState extends State<GameScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               IconButton(
+                constraints: btnSize,
                 icon: Icon(
                   _gameState.noteMode ? Icons.edit_note_outlined : Icons.edit_off_outlined,
                   color: _gameState.noteMode ? Theme.of(context).colorScheme.primary : null,
@@ -226,29 +259,62 @@ class _GameScreenState extends State<GameScreen> {
                     : null,
               ),
               IconButton(
+                constraints: btnSize,
                 icon: const Icon(Icons.undo_outlined),
                 onPressed: _gameState.canUndo ? _undo : null,
                 tooltip: '${l10n.undo} ($undoShortcut)',
               ),
               IconButton(
+                constraints: btnSize,
                 icon: const Icon(Icons.redo_outlined),
                 onPressed: _gameState.canRedo ? _redo : null,
                 tooltip: '${l10n.redo} ($redoShortcut)',
               ),
               IconButton(
+                constraints: btnSize,
                 icon: const Icon(Icons.backspace_outlined),
                 onPressed: _onClearPressed,
                 tooltip: l10n.clearCell,
               ),
               IconButton(
+                constraints: btnSize,
                 icon: const Icon(Icons.replay_outlined),
                 onPressed: _resetPuzzle,
                 tooltip: l10n.resetPuzzle,
               ),
               IconButton(
+                constraints: btnSize,
                 icon: const Icon(Icons.casino_outlined),
                 onPressed: _newGame,
                 tooltip: l10n.newGame,
+              ),
+              IconButton(
+                constraints: btnSize,
+                icon: const Icon(Icons.flag_outlined),
+                onPressed: _gameState.hasProgress ? _saveMilestone : null,
+                tooltip: l10n.saveMilestone,
+              ),
+              SizedBox.fromSize(
+                size: const Size(32, 32),
+                child: PopupMenuButton<int>(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.history,
+                    color: _milestones.isEmpty
+                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.25)
+                        : null,
+                  ),
+                  tooltip: l10n.restoreMilestone,
+                  enabled: _milestones.isNotEmpty,
+                  onSelected: _restoreMilestone,
+                  itemBuilder: (_) => [
+                    for (var i = _milestones.length - 1; i >= 0; i--)
+                      PopupMenuItem<int>(
+                        value: i,
+                        child: Text('${i + 1}. ${timeFmt.format(_milestones[i].createdAt)}'),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -313,7 +379,34 @@ class _GameScreenState extends State<GameScreen> {
     return null;
   }
 
-  void _autosave() => GamePersistence.save(_gameState, _difficulty);
+  void _saveMilestone() {
+    setState(() {
+      _milestones.add(Milestone(
+        createdAt: DateTime.now(),
+        board: _gameState.currentBoard.copy(),
+        noteMode: _gameState.noteMode,
+      ));
+    });
+    _autosave();
+  }
+
+  void _restoreMilestone(int index) {
+    final m = _milestones[index];
+    setState(() {
+      _milestones.removeRange(index + 1, _milestones.length);
+      _gameState = GameState(
+        initialBoard: _gameState.initialBoard,
+        solutionBoard: _gameState.solutionBoard,
+        currentBoard: m.board.copy(),
+        noteMode: m.noteMode,
+      );
+      _showVictory = false;
+      _focusNode.requestFocus();
+    });
+    _autosave();
+  }
+
+  void _autosave() => GamePersistence.save(_gameState, _difficulty, _milestones);
 
   void _onDigitPressed(int digit) {
     setState(() {
@@ -353,6 +446,7 @@ class _GameScreenState extends State<GameScreen> {
 
   void _resetPuzzle() {
     setState(() {
+      _milestones.clear();
       _gameState = GameState(
         initialBoard: _gameState.initialBoard,
         solutionBoard: _gameState.solutionBoard,
@@ -369,6 +463,7 @@ class _GameScreenState extends State<GameScreen> {
     if (chosen == null || !mounted) return;
     notifier.update(notifier.value.withDifficulty(chosen));
     setState(() {
+      _milestones.clear();
       _difficulty = chosen;
       final puzzle = PuzzleGenerator(seed: DateTime.now().millisecondsSinceEpoch)
           .generate(_difficulty);

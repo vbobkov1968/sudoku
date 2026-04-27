@@ -20,13 +20,26 @@ class GameState {
     this.noteMode = false,
     this.historyLimit = 50,
     (int, int)? selectedCell,
+    List<Board>? undoStack,
+    List<Board>? redoStack,
   }) : _currentBoard = currentBoard ?? initialBoard.copy(),
-       _selectedCell = selectedCell;
+       _selectedCell = selectedCell {
+    if (undoStack != null) _undoStack.addAll(undoStack);
+    if (redoStack != null) _redoStack.addAll(redoStack);
+  }
 
   Board get currentBoard => _currentBoard;
 
   bool get canUndo => _undoStack.isNotEmpty;
   bool get canRedo => _redoStack.isNotEmpty;
+
+  List<Board> get undoStack => List.unmodifiable(_undoStack);
+  List<Board> get redoStack => List.unmodifiable(_redoStack);
+
+  /// True when any non-given cell has a value or notes (game has user progress).
+  bool get hasProgress => _currentBoard.allCells.any(
+    (c) => !c.isGiven && (c.value != null || c.notes.isNotEmpty),
+  );
 
   /// Returns true if the board is completely filled with no conflicts.
   bool get isWin => SudokuValidator.isWin(_currentBoard.toInts());

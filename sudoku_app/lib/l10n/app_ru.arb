@@ -57,5 +57,7 @@
   "winRate": "Процент побед",
   "bestTime": "Лучшее время",
   "currentStreak": "Текущая серия",
-  "longestStreak": "Лучшая серия"
+  "longestStreak": "Лучшая серия",
+  "saveMilestone": "Сохранить закладку",
+  "restoreMilestone": "Восстановить закладку"
 }
