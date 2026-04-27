@@ -33,6 +33,7 @@ class AppDelegate: FlutterAppDelegate {
   private var savedAppleMenuTitles: [Int: String] = [:]
   private var currentLocale = "en"
   private let viewMenuTranslator = ViewMenuTranslator()
+  private var helpMenuItemAdded = false
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return true
@@ -41,29 +42,30 @@ class AppDelegate: FlutterAppDelegate {
   override func applicationDidFinishLaunching(_ notification: Notification) {
     super.applicationDidFinishLaunching(notification)
     saveOriginalAppleMenuTitles()
-    addHelpMenuItem()
     let lang = UserDefaults.standard.string(forKey: "flutter.settings_locale") ?? "en"
     applyLocale(lang)
   }
 
-  private func addHelpMenuItem() {
+  private func ensureHelpMenuItemAdded() {
+    guard !helpMenuItemAdded else { return }
     guard let helpMenu = NSApp.mainMenu?.items.first(where: {
       $0.title == "Help" || $0.title == "Справка"
     })?.submenu else { return }
-    let item = NSMenuItem(
-      title: "Sudoku Help",
-      action: #selector(openHelp(_:)),
-      keyEquivalent: "?"
-    )
+    guard !helpMenu.items.contains(where: { $0.action == #selector(openHelp(_:)) }) else {
+      helpMenuItemAdded = true
+      return
+    }
+    let title = currentLocale == "ru" ? "Справка по Судоку" : "Sudoku Help"
+    let item = NSMenuItem(title: title, action: #selector(openHelp(_:)), keyEquivalent: "?")
     item.keyEquivalentModifierMask = .command
     item.target = self
-    helpMenu.insertItem(item, at: 0)
-    if helpMenu.numberOfItems > 1 {
-      helpMenu.insertItem(.separator(), at: 1)
-    }
+    helpMenu.addItem(.separator())
+    helpMenu.addItem(item)
+    helpMenuItemAdded = true
   }
 
   override func applicationWillUpdate(_ notification: Notification) {
+    ensureHelpMenuItemAdded()
     let toggleFS = NSSelectorFromString("toggleFullScreen:")
     for item in NSApp.mainMenu?.items ?? [] {
       if currentLocale == "ru" {
