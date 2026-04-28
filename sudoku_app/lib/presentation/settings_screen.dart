@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../core/models/app_settings.dart';
 import '../core/models/difficulty.dart';
 import 'app_settings_scope.dart';
@@ -48,79 +48,79 @@ class SettingsDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: _SettingsColumn(label: l10n.theme, children: [
-                    _RadioItem<ThemeMode>(
-                      label: l10n.themeLight,
-                      value: ThemeMode.light,
-                      groupValue: settings.themeMode,
-                      onChanged: (v) =>
-                          notifier.update(settings.withTheme(v)),
-                    ),
-                    _RadioItem<ThemeMode>(
-                      label: l10n.themeDark,
-                      value: ThemeMode.dark,
-                      groupValue: settings.themeMode,
-                      onChanged: (v) =>
-                          notifier.update(settings.withTheme(v)),
-                    ),
-                    _RadioItem<ThemeMode>(
-                      label: l10n.themeSystem,
-                      value: ThemeMode.system,
-                      groupValue: settings.themeMode,
-                      onChanged: (v) =>
-                          notifier.update(settings.withTheme(v)),
-                    ),
-                  ]),
+                  child: RadioGroup<ThemeMode>(
+                    groupValue: settings.themeMode,
+                    onChanged: (v) {
+                      if (v != null) notifier.update(settings.withTheme(v));
+                    },
+                    child: _SettingsColumn(label: l10n.theme, children: [
+                      _RadioItem<ThemeMode>(
+                        label: l10n.themeLight,
+                        value: ThemeMode.light,
+                        onChanged: (v) => notifier.update(settings.withTheme(v)),
+                      ),
+                      _RadioItem<ThemeMode>(
+                        label: l10n.themeDark,
+                        value: ThemeMode.dark,
+                        onChanged: (v) => notifier.update(settings.withTheme(v)),
+                      ),
+                      _RadioItem<ThemeMode>(
+                        label: l10n.themeSystem,
+                        value: ThemeMode.system,
+                        onChanged: (v) => notifier.update(settings.withTheme(v)),
+                      ),
+                    ]),
+                  ),
                 ),
                 Expanded(
-                  child: _SettingsColumn(label: l10n.language, children: [
-                    _RadioItem<String>(
-                      label: l10n.languageEnglish,
-                      value: 'en',
-                      groupValue: settings.locale.languageCode,
-                      onChanged: (v) =>
-                          notifier.update(settings.withLocale(Locale(v))),
-                    ),
-                    _RadioItem<String>(
-                      label: l10n.languageRussian,
-                      value: 'ru',
-                      groupValue: settings.locale.languageCode,
-                      onChanged: (v) =>
-                          notifier.update(settings.withLocale(Locale(v))),
-                    ),
-                  ]),
+                  child: RadioGroup<String>(
+                    groupValue: settings.locale.languageCode,
+                    onChanged: (v) {
+                      if (v != null) notifier.update(settings.withLocale(Locale(v)));
+                    },
+                    child: _SettingsColumn(label: l10n.language, children: [
+                      _RadioItem<String>(
+                        label: l10n.languageEnglish,
+                        value: 'en',
+                        onChanged: (v) => notifier.update(settings.withLocale(Locale(v))),
+                      ),
+                      _RadioItem<String>(
+                        label: l10n.languageRussian,
+                        value: 'ru',
+                        onChanged: (v) => notifier.update(settings.withLocale(Locale(v))),
+                      ),
+                    ]),
+                  ),
                 ),
                 Expanded(
-                  child: _SettingsColumn(label: l10n.difficulty, children: [
-                    _RadioItem<Difficulty>(
-                      label: l10n.difficultyEasy,
-                      value: Difficulty.easy,
-                      groupValue: settings.difficulty,
-                      onChanged: (v) =>
-                          notifier.update(settings.withDifficulty(v)),
-                    ),
-                    _RadioItem<Difficulty>(
-                      label: l10n.difficultyMedium,
-                      value: Difficulty.medium,
-                      groupValue: settings.difficulty,
-                      onChanged: (v) =>
-                          notifier.update(settings.withDifficulty(v)),
-                    ),
-                    _RadioItem<Difficulty>(
-                      label: l10n.difficultyHard,
-                      value: Difficulty.hard,
-                      groupValue: settings.difficulty,
-                      onChanged: (v) =>
-                          notifier.update(settings.withDifficulty(v)),
-                    ),
-                    _RadioItem<Difficulty>(
-                      label: l10n.difficultyExpert,
-                      value: Difficulty.expert,
-                      groupValue: settings.difficulty,
-                      onChanged: (v) =>
-                          notifier.update(settings.withDifficulty(v)),
-                    ),
-                  ]),
+                  child: RadioGroup<Difficulty>(
+                    groupValue: settings.difficulty,
+                    onChanged: (v) {
+                      if (v != null) notifier.update(settings.withDifficulty(v));
+                    },
+                    child: _SettingsColumn(label: l10n.difficulty, children: [
+                      _RadioItem<Difficulty>(
+                        label: l10n.difficultyEasy,
+                        value: Difficulty.easy,
+                        onChanged: (v) => notifier.update(settings.withDifficulty(v)),
+                      ),
+                      _RadioItem<Difficulty>(
+                        label: l10n.difficultyMedium,
+                        value: Difficulty.medium,
+                        onChanged: (v) => notifier.update(settings.withDifficulty(v)),
+                      ),
+                      _RadioItem<Difficulty>(
+                        label: l10n.difficultyHard,
+                        value: Difficulty.hard,
+                        onChanged: (v) => notifier.update(settings.withDifficulty(v)),
+                      ),
+                      _RadioItem<Difficulty>(
+                        label: l10n.difficultyExpert,
+                        value: Difficulty.expert,
+                        onChanged: (v) => notifier.update(settings.withDifficulty(v)),
+                      ),
+                    ]),
+                  ),
                 ),
               ],
             ),
@@ -155,14 +155,12 @@ class _SettingsColumn extends StatelessWidget {
 class _RadioItem<T> extends StatelessWidget {
   final String label;
   final T value;
-  final T groupValue;
   final void Function(T) onChanged;
 
   const _RadioItem({
     super.key,
     required this.label,
     required this.value,
-    required this.groupValue,
     required this.onChanged,
   });
 
@@ -174,8 +172,6 @@ class _RadioItem<T> extends StatelessWidget {
         children: [
           Radio<T>(
             value: value,
-            groupValue: groupValue,
-            onChanged: (_) => onChanged(value),
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
           ),

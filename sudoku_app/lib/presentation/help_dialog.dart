@@ -1,44 +1,115 @@
 import 'dart:io';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/generated/app_localizations.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
-class HelpDialog extends StatefulWidget {
-  const HelpDialog({super.key});
+class HelpPanel extends StatefulWidget {
+  const HelpPanel({super.key});
 
-  static void show(BuildContext context) {
-    showDialog<void>(context: context, builder: (_) => const HelpDialog());
-  }
+  static Future<void> show(BuildContext context) => showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => const HelpPanel(),
+      );
 
   @override
-  State<HelpDialog> createState() => _HelpDialogState();
+  State<HelpPanel> createState() => _HelpPanelState();
 }
 
-class _HelpDialogState extends State<HelpDialog> {
-  final _scrollController = ScrollController();
-
-  void _scroll(double delta) {
-    final offset = (_scrollController.offset + delta)
-        .clamp(0.0, _scrollController.position.maxScrollExtent);
-    _scrollController.jumpTo(offset);
-  }
+class _HelpPanelState extends State<HelpPanel> {
+  final _ctrl = ScrollController();
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _ctrl.dispose();
     super.dispose();
+  }
+
+  String _buildMarkdown(AppLocalizations l10n) {
+    final buf = StringBuffer();
+
+    buf.writeln('## ${l10n.helpRulesTitle}');
+    buf.writeln();
+    buf.writeln(l10n.helpRulesText);
+    buf.writeln();
+    buf.writeln('### ${l10n.helpHowFormedTitle}');
+    buf.writeln();
+    buf.writeln(l10n.helpHowFormedText);
+    buf.writeln();
+    buf.writeln('### ${l10n.helpDifficultyTitle}');
+    buf.writeln();
+    buf.writeln(l10n.helpDifficultyText
+        .replaceAll('\n  • ', '\n- ')
+        .replaceAll('\n• ', '\n- '));
+    buf.writeln();
+
+    buf.writeln('## ${l10n.helpToolbarTitle}');
+    buf.writeln();
+    for (final (label, desc) in [
+      (l10n.notes,            l10n.helpToolbarNotesDesc),
+      ('${l10n.undo} / ${l10n.redo}', l10n.helpToolbarUndoDesc),
+      (l10n.clearCell,        l10n.helpToolbarClearDesc),
+      (l10n.resetPuzzle,      l10n.helpToolbarResetDesc),
+      (l10n.newGame,          l10n.helpToolbarNewGameDesc),
+      (l10n.saveMilestone,    l10n.helpToolbarCheckpointSaveDesc),
+      (l10n.restoreMilestone, l10n.helpToolbarCheckpointRestoreDesc),
+    ]) {
+      buf.writeln('**$label** — $desc');
+      buf.writeln();
+    }
+
+    if (Platform.isMacOS) {
+      buf.writeln('## ${l10n.helpKeyboardTitle}');
+      buf.writeln();
+      for (final (key, desc) in [
+        ('`1–9`',                 l10n.helpKeyboardDigitsDesc),
+        ('`N`',                   l10n.helpKeyboardNDesc),
+        ('`↑ ↓ ← →`',            l10n.helpKeyboardArrowsDesc),
+        ('`Backspace / Delete`',  l10n.helpKeyboardBackspaceDesc),
+        ('`⌘Z`',                  l10n.helpKeyboardUndoDesc),
+        ('`⇧⌘Z`',                l10n.helpKeyboardRedoDesc),
+      ]) {
+        buf.writeln('$key — $desc');
+        buf.writeln();
+      }
+    }
+
+    return buf.toString();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final h = (MediaQuery.of(context).size.height * 0.72).clamp(420.0, 660.0);
+    final size = MediaQuery.of(context).size;
+    final isDesktop =
+        Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
+    final styleSheet = MarkdownStyleSheet.fromTheme(theme).copyWith(
+      h2: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      h3: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      p: theme.textTheme.bodyMedium,
+      code: theme.textTheme.bodyMedium?.copyWith(
+        fontFamily: 'monospace',
+        fontWeight: FontWeight.w600,
+        backgroundColor: theme.colorScheme.surface,
+      ),
+    );
+
+    final double panelWidth = isDesktop ? 520 : size.width - 32;
+    final double panelHeight = isDesktop
+        ? (size.height * 0.72).clamp(420.0, 660.0)
+        : size.height * 0.88;
+
     return Dialog(
+      insetPadding: EdgeInsets.zero,
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 8,
       child: SizedBox(
-        width: 520,
-        height: h,
+        width: panelWidth,
+        height: panelHeight,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
           child: Column(
@@ -47,60 +118,18 @@ class _HelpDialogState extends State<HelpDialog> {
               Text(l10n.help, style: theme.textTheme.headlineSmall),
               const SizedBox(height: 12),
               Expanded(
-                child: ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(
-                    dragDevices: PointerDeviceKind.values.toSet(),
-                    scrollbars: false,
+                child: Scrollbar(
+                  controller: _ctrl,
+                  thumbVisibility: isDesktop,
+                  child: SingleChildScrollView(
+                    controller: _ctrl,
+                    child: MarkdownBody(
+                      data: _buildMarkdown(l10n),
+                      styleSheet: styleSheet,
+                    ),
                   ),
-                  child: Listener(
-                  onPointerSignal: (event) {
-                    if (event is PointerScrollEvent) {
-                      _scroll(event.scrollDelta.dy);
-                    }
-                  },
-                  child: Scrollbar(
-                  controller: _scrollController,
-                  thumbVisibility: true,
-                  child: ListView(
-                    controller: _scrollController,
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _Section(title: l10n.helpRulesTitle, children: [
-                        _Body(l10n.helpRulesText),
-                        const SizedBox(height: 10),
-                        _SubTitle(l10n.helpHowFormedTitle),
-                        _Body(l10n.helpHowFormedText),
-                        const SizedBox(height: 10),
-                        _SubTitle(l10n.helpDifficultyTitle),
-                        _Body(l10n.helpDifficultyText),
-                      ]),
-                      _Section(title: l10n.helpToolbarTitle, children: [
-                        _ToolbarRow(Icons.edit_note_outlined,    l10n.notes,                    l10n.helpToolbarNotesDesc),
-                        _ToolbarRow(Icons.undo_outlined,         '${l10n.undo} / ${l10n.redo}', l10n.helpToolbarUndoDesc),
-                        _ToolbarRow(Icons.backspace_outlined,    l10n.clearCell,                l10n.helpToolbarClearDesc),
-                        _ToolbarRow(Icons.replay_outlined,       l10n.resetPuzzle,              l10n.helpToolbarResetDesc),
-                        _ToolbarRow(Icons.casino_outlined,       l10n.newGame,                  l10n.helpToolbarNewGameDesc),
-                        _ToolbarRow(Icons.flag_outlined,         l10n.saveMilestone,            l10n.helpToolbarCheckpointSaveDesc),
-                        _ToolbarRow(Icons.history,               l10n.restoreMilestone,         l10n.helpToolbarCheckpointRestoreDesc),
-                      ]),
-                      if (Platform.isMacOS)
-                        _Section(title: l10n.helpKeyboardTitle, children: [
-                          _KeyboardTable(rows: [
-                            ('1–9',                   l10n.helpKeyboardDigitsDesc),
-                            ('N',                     l10n.helpKeyboardNDesc),
-                            ('↑ ↓ ← →',              l10n.helpKeyboardArrowsDesc),
-                            ('Backspace / Delete',     l10n.helpKeyboardBackspaceDesc),
-                            ('⌘Z',                    l10n.helpKeyboardUndoDesc),
-                            ('⇧⌘Z',                  l10n.helpKeyboardRedoDesc),
-                          ]),
-                        ]),
-                      const SizedBox(height: 8),
-                    ],           // ListView children
-                  ),             // ListView
-                ),               // Scrollbar
-                ),               // Listener
-                ),               // ScrollConfiguration
-              ),                 // Expanded
+                ),
+              ),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -112,125 +141,6 @@ class _HelpDialogState extends State<HelpDialog> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const _Section({required this.title, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-class _SubTitle extends StatelessWidget {
-  final String text;
-  const _SubTitle(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(text,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(fontWeight: FontWeight.w600)),
-    );
-  }
-}
-
-class _Body extends StatelessWidget {
-  final String text;
-  const _Body(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text,
-        style: Theme.of(context).textTheme.bodyMedium);
-  }
-}
-
-class _ToolbarRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String description;
-
-  const _ToolbarRow(this.icon, this.label, this.description);
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurface;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: color.withOpacity(0.7)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyMedium,
-                children: [
-                  TextSpan(
-                      text: '$label — ',
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  TextSpan(text: description),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _KeyboardTable extends StatelessWidget {
-  final List<(String, String)> rows;
-  const _KeyboardTable({required this.rows});
-
-  @override
-  Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium;
-    final monoStyle = style?.copyWith(
-        fontFamily: 'monospace', fontWeight: FontWeight.w600);
-    return Table(
-      columnWidths: const {0: IntrinsicColumnWidth(), 1: FlexColumnWidth()},
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      children: rows.map((r) {
-        final (key, desc) = r;
-        return TableRow(children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 0),
-            child: Text(key, style: monoStyle),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
-            child: Text(desc, style: style),
-          ),
-        ]);
-      }).toList(),
     );
   }
 }

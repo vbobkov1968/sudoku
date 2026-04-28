@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../core/models/difficulty.dart';
 
 class DifficultyPickerDialog extends StatefulWidget {
@@ -51,19 +51,21 @@ class _DifficultyPickerDialogState extends State<DifficultyPickerDialog> {
       ]),
       // Zero horizontal padding so radio tiles reach the edges naturally.
       contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: Difficulty.values
-            .map((d) => RadioListTile<Difficulty>(
-                  dense: true,
-                  visualDensity: VisualDensity.compact,
-                  title: Text(labels[d]!),
-                  value: d,
-                  groupValue: _selected,
-                  activeColor: colorScheme.primary,
-                  onChanged: (v) => setState(() => _selected = v!),
-                ))
-            .toList(),
+      content: RadioGroup<Difficulty>(
+        groupValue: _selected,
+        onChanged: (v) { if (v != null) setState(() => _selected = v); },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: Difficulty.values
+              .map((d) => RadioListTile<Difficulty>(
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    title: Text(labels[d]!),
+                    value: d,
+                    activeColor: colorScheme.primary,
+                  ))
+              .toList(),
+        ),
       ),
       actionsAlignment: MainAxisAlignment.center,
       actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),

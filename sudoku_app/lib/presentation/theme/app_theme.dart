@@ -6,7 +6,7 @@ abstract final class AppTheme {
   static const _useMaterial3 = true;
 
   static final _scrollbarTheme = ScrollbarThemeData(
-    thumbVisibility: MaterialStateProperty.all(false),
+    thumbVisibility: WidgetStateProperty.all(false),
   );
 
   static final lightTheme = ThemeData(

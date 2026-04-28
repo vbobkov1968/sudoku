@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -13,7 +13,7 @@ import '../core/models/difficulty.dart';
 import '../data/persistence/game_persistence.dart';
 import 'about_app_dialog.dart';
 import 'app_settings_scope.dart';
-import 'help_dialog.dart';
+import 'help_dialog.dart' show HelpPanel;
 import 'difficulty_picker_dialog.dart';
 import 'settings_screen.dart';
 import 'widgets/number_pad.dart';
@@ -82,7 +82,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     if (call.method == 'openSettings') SettingsDialog.show(context);
     if (call.method == 'openAbout') AboutAppDialog.show(context);
-    if (call.method == 'openHelp') HelpDialog.show(context);
+    if (call.method == 'openHelp') HelpPanel.show(context);
   }
 
   @override
@@ -158,7 +158,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     } else if (value == 'about') {
       AboutAppDialog.show(context);
     } else if (value == 'help') {
-      HelpDialog.show(context);
+      HelpPanel.show(context);
     }
   }
 
@@ -241,7 +241,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             color: Theme.of(context).colorScheme.onSurface,
             size: 20,
           ),
-          disabledColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+          disabledColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: Padding(
@@ -306,7 +306,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   icon: Icon(
                     Icons.history,
                     color: _milestones.isEmpty
-                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.25)
+                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25)
                         : null,
                   ),
                   tooltip: l10n.restoreMilestone,

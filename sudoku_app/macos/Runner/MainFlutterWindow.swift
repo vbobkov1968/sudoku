@@ -52,28 +52,19 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     // FlutterViewController.backgroundColor defaults to black; clear it before engine starts.
     vc.backgroundColor = .clear
 
+    // The blur must be a subview of the Flutter view (not a sibling), so that
+    // the Flutter view itself remains the window's contentView and receives all
+    // events.  Placing it at the very back keeps it behind Flutter's Metal layer.
     let flutterView = vc.view
-    flutterView.autoresizingMask = [.width, .height]
-
-    // Build wrapper: NSVisualEffectView behind the Flutter view.
-    let wrapper = NSView(frame: NSRect(origin: .zero, size: initialSize))
-    wrapper.wantsLayer = true
-    wrapper.layer?.backgroundColor = CGColor.clear
-    wrapper.layer?.isOpaque = false
-    wrapper.autoresizingMask = [.width, .height]
-
-    let blur = NSVisualEffectView(frame: wrapper.bounds)
+    let blur = NSVisualEffectView(frame: flutterView.bounds)
     blur.material       = .underWindowBackground
     blur.blendingMode   = .behindWindow
     blur.state          = .active
     blur.alphaValue     = 0.75
     blur.autoresizingMask = [.width, .height]
-    wrapper.addSubview(blur)
+    flutterView.addSubview(blur, positioned: .below, relativeTo: nil)
 
-    flutterView.frame = wrapper.bounds
-    wrapper.addSubview(flutterView)
-
-    self.contentView = wrapper
+    self.contentView = flutterView
 
     RegisterGeneratedPlugins(registry: vc)
 

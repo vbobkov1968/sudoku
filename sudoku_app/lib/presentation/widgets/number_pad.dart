@@ -53,7 +53,7 @@ class _NumberPadButton extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         side: BorderSide(
-          color: borderColor.withOpacity(0.3),
+          color: borderColor.withValues(alpha: 0.3),
           width: 1.0,
         ),
         padding: const EdgeInsets.symmetric(vertical: 12),

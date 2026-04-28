@@ -28,7 +28,7 @@ private class ViewMenuTranslator: NSObject, NSMenuDelegate {
   }
 }
 
-@NSApplicationMain
+@main
 class AppDelegate: FlutterAppDelegate {
   private var savedAppleMenuTitles: [Int: String] = [:]
   private var currentLocale = "en"
@@ -36,6 +36,10 @@ class AppDelegate: FlutterAppDelegate {
   private var helpMenuItemAdded = false
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    return true
+  }
+
+  override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
     return true
   }
 

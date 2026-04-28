@@ -148,12 +148,12 @@ class SudokuCell extends StatelessWidget {
     if (isConflict && isSelected) {
       backgroundColor = colorScheme.errorContainer;
     } else if (isConflict) {
-      backgroundColor = colorScheme.errorContainer.withOpacity(0.5);
+      backgroundColor = colorScheme.errorContainer.withValues(alpha: 0.5);
     } else if (isSelected) {
       backgroundColor = colorScheme.primaryContainer;
     } else if (isHighlighted) {
       backgroundColor = Color.alphaBlend(
-        colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
+        colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08),
         colorScheme.surface,
       );
     } else {
