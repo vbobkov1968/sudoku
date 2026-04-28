@@ -60,7 +60,8 @@ class AppDelegate: FlutterAppDelegate {
       return
     }
     let title = currentLocale == "ru" ? "Справка по Судоку" : "Sudoku Help"
-    let item = NSMenuItem(title: title, action: #selector(openHelp(_:)), keyEquivalent: "")
+    let item = NSMenuItem(title: title, action: #selector(openHelp(_:)), keyEquivalent: "/")
+    item.keyEquivalentModifierMask = .command
     item.target = self
     helpMenu.addItem(.separator())
     helpMenu.addItem(item)
@@ -158,10 +159,8 @@ class AppDelegate: FlutterAppDelegate {
       if t == "Help" || t == "Справка" {
         item.title = toRussian ? "Справка" : "Help"
         item.submenu?.title = toRussian ? "Справка" : "Help"
-        item.submenu?.items.first.map {
-          if $0.action == #selector(openHelp(_:)) {
-            $0.title = toRussian ? "Справка по Судоку" : "Sudoku Help"
-          }
+        item.submenu?.items.first(where: { $0.action == #selector(openHelp(_:)) }).map {
+          $0.title = toRussian ? "Справка по Судоку" : "Sudoku Help"
         }
       }
     }

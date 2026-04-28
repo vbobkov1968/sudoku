@@ -26,9 +26,8 @@ class _HelpPanelState extends State<HelpPanel> {
     super.dispose();
   }
 
-  String _buildMarkdown(AppLocalizations l10n) {
+  String _buildRulesMarkdown(AppLocalizations l10n) {
     final buf = StringBuffer();
-
     buf.writeln('## ${l10n.helpRulesTitle}');
     buf.writeln();
     buf.writeln(l10n.helpRulesText);
@@ -42,40 +41,80 @@ class _HelpPanelState extends State<HelpPanel> {
     buf.writeln(l10n.helpDifficultyText
         .replaceAll('\n  • ', '\n- ')
         .replaceAll('\n• ', '\n- '));
-    buf.writeln();
-
-    buf.writeln('## ${l10n.helpToolbarTitle}');
-    buf.writeln();
-    for (final (label, desc) in [
-      (l10n.notes,            l10n.helpToolbarNotesDesc),
-      ('${l10n.undo} / ${l10n.redo}', l10n.helpToolbarUndoDesc),
-      (l10n.clearCell,        l10n.helpToolbarClearDesc),
-      (l10n.resetPuzzle,      l10n.helpToolbarResetDesc),
-      (l10n.newGame,          l10n.helpToolbarNewGameDesc),
-      (l10n.saveMilestone,    l10n.helpToolbarCheckpointSaveDesc),
-      (l10n.restoreMilestone, l10n.helpToolbarCheckpointRestoreDesc),
-    ]) {
-      buf.writeln('**$label** — $desc');
-      buf.writeln();
-    }
-
-    if (Platform.isMacOS) {
-      buf.writeln('## ${l10n.helpKeyboardTitle}');
-      buf.writeln();
-      for (final (key, desc) in [
-        ('`1–9`',                 l10n.helpKeyboardDigitsDesc),
-        ('`N`',                   l10n.helpKeyboardNDesc),
-        ('`↑ ↓ ← →`',            l10n.helpKeyboardArrowsDesc),
-        ('`Backspace / Delete`',  l10n.helpKeyboardBackspaceDesc),
-        ('`⌘Z`',                  l10n.helpKeyboardUndoDesc),
-        ('`⇧⌘Z`',                l10n.helpKeyboardRedoDesc),
-      ]) {
-        buf.writeln('$key — $desc');
-        buf.writeln();
-      }
-    }
-
     return buf.toString();
+  }
+
+  String _buildKeyboardMarkdown(AppLocalizations l10n) {
+    final buf = StringBuffer();
+    buf.writeln('## ${l10n.helpKeyboardTitle}');
+    buf.writeln();
+    for (final (key, desc) in [
+      ('`1–9`', l10n.helpKeyboardDigitsDesc),
+      ('`N`', l10n.helpKeyboardNDesc),
+      ('`↑ ↓ ← →`', l10n.helpKeyboardArrowsDesc),
+      ('`Backspace / Delete`', l10n.helpKeyboardBackspaceDesc),
+      ('`⌘Z`', l10n.helpKeyboardUndoDesc),
+      ('`⇧⌘Z`', l10n.helpKeyboardRedoDesc),
+    ]) {
+      buf.writeln('$key — $desc');
+      buf.writeln();
+    }
+    return buf.toString();
+  }
+
+  Widget _buildToolbarSection(AppLocalizations l10n, ThemeData theme) {
+    final style = theme.textTheme.bodyMedium;
+    final boldStyle = style?.copyWith(fontWeight: FontWeight.bold);
+
+    final items = <(List<IconData>, String, String)>[
+      ([Icons.edit_note_outlined], l10n.notes, l10n.helpToolbarNotesDesc),
+      ([Icons.undo_outlined, Icons.redo_outlined], '${l10n.undo} / ${l10n.redo}', l10n.helpToolbarUndoDesc),
+      ([Icons.backspace_outlined], l10n.clearCell, l10n.helpToolbarClearDesc),
+      ([Icons.replay_outlined], l10n.resetPuzzle, l10n.helpToolbarResetDesc),
+      ([Icons.casino_outlined], l10n.newGame, l10n.helpToolbarNewGameDesc),
+      ([Icons.flag_outlined], l10n.saveMilestone, l10n.helpToolbarCheckpointSaveDesc),
+      ([Icons.history], l10n.restoreMilestone, l10n.helpToolbarCheckpointRestoreDesc),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.helpToolbarTitle,
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+        ...items.map((item) {
+          final (icons, label, desc) = item;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: icons.length > 1 ? 40 : 22,
+                  child: Row(
+                    children: icons.map((ic) => Icon(ic, size: 18)).toList(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      style: style,
+                      children: [
+                        TextSpan(text: label, style: boldStyle),
+                        TextSpan(text: ' — $desc'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
   }
 
   @override
@@ -123,9 +162,23 @@ class _HelpPanelState extends State<HelpPanel> {
                   thumbVisibility: isDesktop,
                   child: SingleChildScrollView(
                     controller: _ctrl,
-                    child: MarkdownBody(
-                      data: _buildMarkdown(l10n),
-                      styleSheet: styleSheet,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        MarkdownBody(
+                          data: _buildRulesMarkdown(l10n),
+                          styleSheet: styleSheet,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildToolbarSection(l10n, theme),
+                        if (Platform.isMacOS) ...[
+                          const SizedBox(height: 12),
+                          MarkdownBody(
+                            data: _buildKeyboardMarkdown(l10n),
+                            styleSheet: styleSheet,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),
