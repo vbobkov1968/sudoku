@@ -181,6 +181,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoreMilestone => 'Restore checkpoint';
 
   @override
+  String get highlightSameDigit => 'Highlight matching digits';
+
+  @override
+  String get exitHighlightSameDigit => 'Turn off digit highlight';
+
+  @override
   String get help => 'Help';
 
   @override
@@ -210,6 +216,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get helpToolbarNotesDesc =>
       'Toggle note mode — pencil candidate digits into cells instead of entering answers. Press N.';
+
+  @override
+  String get helpToolbarHighlightDesc =>
+      'Highlight all cells that contain the same digit as the selected cell.';
 
   @override
   String get helpToolbarUndoDesc => 'Undo / Redo your last moves.';

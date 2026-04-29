@@ -18,9 +18,9 @@ class NumberPad extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       childAspectRatio: 1.6,
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      padding: const EdgeInsets.all(4),
+      mainAxisSpacing: 6,
+      crossAxisSpacing: 6,
+      padding: const EdgeInsets.all(2),
       children: List.generate(9, (index) {
         final digit = index + 1;
         return _NumberPadButton(
@@ -56,7 +56,7 @@ class _NumberPadButton extends StatelessWidget {
           color: borderColor.withValues(alpha: 0.3),
           width: 1.0,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),

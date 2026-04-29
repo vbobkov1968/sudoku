@@ -43,6 +43,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   late GameState _gameState;
   late Difficulty _difficulty;
   bool _showVictory = false;
+  bool _highlightSameDigit = false;
   final FocusNode _focusNode = FocusNode();
   final List<Milestone> _milestones = [];
 
@@ -175,7 +176,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             child: Center(
               child: AspectRatio(
                 aspectRatio: 1.0,
-                child: SudokuGrid(gameState: _gameState, onCellTap: _onCellTap),
+                child: SudokuGrid(
+                  gameState: _gameState,
+                  onCellTap: _onCellTap,
+                  highlightSameDigit: _highlightSameDigit,
+                ),
               ),
             ),
           ),
@@ -204,7 +209,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 SizedBox(
                   width: gridSize,
                   height: gridSize,
-                  child: SudokuGrid(gameState: _gameState, onCellTap: _onCellTap),
+                  child: SudokuGrid(
+                    gameState: _gameState,
+                    onCellTap: _onCellTap,
+                    highlightSameDigit: _highlightSameDigit,
+                  ),
                 ),
                 _buildToolbar(context, width: null),
                 _buildNumpadCard(),
@@ -243,83 +252,118 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           ),
           disabledColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          iconButtonTheme: IconButtonThemeData(
+            style: ButtonStyle(
+              padding: WidgetStateProperty.all(EdgeInsets.zero),
+              minimumSize: WidgetStateProperty.all(Size.zero),
+            ),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              IconButton(
-                constraints: btnSize,
-                icon: Icon(
-                  _gameState.noteMode ? Icons.edit_note_outlined : Icons.edit_off_outlined,
-                  color: _gameState.noteMode ? Theme.of(context).colorScheme.primary : null,
-                ),
-                onPressed: _toggleNoteMode,
-                tooltip: _gameState.noteMode ? l10n.exitNoteMode : l10n.enterNoteMode,
-                style: _gameState.noteMode
-                    ? IconButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                      )
-                    : null,
-              ),
-              IconButton(
-                constraints: btnSize,
-                icon: const Icon(Icons.undo_outlined),
-                onPressed: _gameState.canUndo ? _undo : null,
-                tooltip: '${l10n.undo} ($undoShortcut)',
-              ),
-              IconButton(
-                constraints: btnSize,
-                icon: const Icon(Icons.redo_outlined),
-                onPressed: _gameState.canRedo ? _redo : null,
-                tooltip: '${l10n.redo} ($redoShortcut)',
-              ),
-              IconButton(
-                constraints: btnSize,
-                icon: const Icon(Icons.backspace_outlined),
-                onPressed: _onClearPressed,
-                tooltip: l10n.clearCell,
-              ),
-              IconButton(
-                constraints: btnSize,
-                icon: const Icon(Icons.replay_outlined),
-                onPressed: _resetPuzzle,
-                tooltip: l10n.resetPuzzle,
-              ),
-              IconButton(
-                constraints: btnSize,
-                icon: const Icon(Icons.casino_outlined),
-                onPressed: _newGame,
-                tooltip: l10n.newGame,
-              ),
-              IconButton(
-                constraints: btnSize,
-                icon: const Icon(Icons.flag_outlined),
-                onPressed: _canSaveMilestone ? _saveMilestone : null,
-                tooltip: l10n.saveMilestone,
-              ),
-              SizedBox.fromSize(
-                size: const Size(32, 32),
-                child: PopupMenuButton<int>(
-                  padding: EdgeInsets.zero,
-                  icon: Icon(
-                    Icons.history,
-                    color: _milestones.isEmpty
-                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    constraints: btnSize,
+                    icon: Icon(
+                      _gameState.noteMode ? Icons.edit_note_outlined : Icons.edit_off_outlined,
+                      color: _gameState.noteMode ? Theme.of(context).colorScheme.primary : null,
+                    ),
+                    onPressed: _toggleNoteMode,
+                    tooltip: _gameState.noteMode ? l10n.exitNoteMode : l10n.enterNoteMode,
+                    style: _gameState.noteMode
+                        ? IconButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          )
                         : null,
                   ),
-                  tooltip: l10n.restoreMilestone,
-                  enabled: _milestones.isNotEmpty,
-                  onSelected: _restoreMilestone,
-                  itemBuilder: (_) => [
-                    for (var i = _milestones.length - 1; i >= 0; i--)
-                      PopupMenuItem<int>(
-                        value: i,
-                        child: Text('${i + 1}. ${timeFmt.format(_milestones[i].createdAt)}'),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: Icon(
+                      Icons.highlight,
+                      color: _highlightSameDigit ? const Color(0xFFFF9800) : null,
+                    ),
+                    onPressed: _toggleHighlightSameDigit,
+                    tooltip: _highlightSameDigit
+                        ? l10n.exitHighlightSameDigit
+                        : l10n.highlightSameDigit,
+                    style: _highlightSameDigit
+                        ? IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF9800).withValues(alpha: 0.15),
+                          )
+                        : null,
+                  ),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: const Icon(Icons.undo_outlined),
+                    onPressed: _gameState.canUndo ? _undo : null,
+                    tooltip: '${l10n.undo} ($undoShortcut)',
+                  ),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: const Icon(Icons.redo_outlined),
+                    onPressed: _gameState.canRedo ? _redo : null,
+                    tooltip: '${l10n.redo} ($redoShortcut)',
+                  ),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: const Icon(Icons.backspace_outlined),
+                    onPressed: _onClearPressed,
+                    tooltip: l10n.clearCell,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  const SizedBox(width: 32, height: 32),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: const Icon(Icons.replay_outlined),
+                    onPressed: _resetPuzzle,
+                    tooltip: l10n.resetPuzzle,
+                  ),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: const Icon(Icons.casino_outlined),
+                    onPressed: _newGame,
+                    tooltip: l10n.newGame,
+                  ),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: const Icon(Icons.flag_outlined),
+                    onPressed: _canSaveMilestone ? _saveMilestone : null,
+                    tooltip: l10n.saveMilestone,
+                  ),
+                  SizedBox.fromSize(
+                    size: const Size(32, 32),
+                    child: PopupMenuButton<int>(
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        Icons.history,
+                        color: _milestones.isEmpty
+                            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25)
+                            : null,
                       ),
-                  ],
-                ),
+                      tooltip: l10n.restoreMilestone,
+                      enabled: _milestones.isNotEmpty,
+                      onSelected: _restoreMilestone,
+                      itemBuilder: (_) => [
+                        for (var i = _milestones.length - 1; i >= 0; i--)
+                          PopupMenuItem<int>(
+                            value: i,
+                            child: Text('${i + 1}. ${timeFmt.format(_milestones[i].createdAt)}'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -335,7 +379,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       elevation: 1,
       shadowColor: Colors.black26,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(6),
         child: NumberPad(onDigitPressed: _onDigitPressed),
       ),
     );
@@ -479,6 +523,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void _toggleNoteMode() {
     setState(() => _gameState.toggleNoteMode());
     _autosave();
+  }
+
+  void _toggleHighlightSameDigit() {
+    setState(() => _highlightSameDigit = !_highlightSameDigit);
   }
 
   void _undo() {

@@ -6,17 +6,26 @@ import '../../core/models/cell.dart';
 class SudokuGrid extends StatelessWidget {
   final GameState gameState;
   final Function(int row, int col)? onCellTap;
+  final bool highlightSameDigit;
 
   const SudokuGrid({
     super.key,
     required this.gameState,
     this.onCellTap,
+    this.highlightSameDigit = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final conflicts = gameState.conflictCells;
     final colorScheme = Theme.of(context).colorScheme;
+
+    int? selectedDigit;
+    if (highlightSameDigit && gameState.selectedCell != null) {
+      final (r, c) = gameState.selectedCell!;
+      selectedDigit = gameState.currentBoard.getCell(r, c).value;
+    }
+
     return Semantics(
       label: 'Sudoku puzzle grid',
       child: AspectRatio(
@@ -40,11 +49,15 @@ class SudokuGrid extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final row = index ~/ 9;
                     final col = index % 9;
+                    final isSelected = gameState.selectedCell == (row, col);
+                    final isSameDigit = selectedDigit != null &&
+                        gameState.currentBoard.getCell(row, col).value == selectedDigit;
                     return SudokuCell(
                       cell: gameState.currentBoard.getCell(row, col),
-                      isSelected: gameState.selectedCell == (row, col),
+                      isSelected: isSelected,
                       isHighlighted: _isHighlighted(row, col, gameState.selectedCell),
                       isConflict: conflicts.contains((row, col)),
+                      isSameDigit: isSameDigit,
                       onTap: () => onCellTap?.call(row, col),
                     );
                   },
@@ -114,6 +127,7 @@ class SudokuCell extends StatelessWidget {
   final bool isSelected;
   final bool isHighlighted;
   final bool isConflict;
+  final bool isSameDigit;
   final VoidCallback? onTap;
 
   const SudokuCell({
@@ -122,6 +136,7 @@ class SudokuCell extends StatelessWidget {
     this.isSelected = false,
     this.isHighlighted = false,
     this.isConflict = false,
+    this.isSameDigit = false,
     this.onTap,
   });
 
@@ -168,10 +183,27 @@ class SudokuCell extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          decoration: BoxDecoration(color: backgroundColor),
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: _buildCellContent(theme),
+          color: backgroundColor,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(2),
+                child: _buildCellContent(theme),
+              ),
+              if (isSameDigit)
+                Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: const Color(0xFFFF9800),
+                        width: 2.0,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

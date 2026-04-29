@@ -440,6 +440,18 @@ abstract class AppLocalizations {
   /// **'Restore checkpoint'**
   String get restoreMilestone;
 
+  /// No description provided for @highlightSameDigit.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight matching digits'**
+  String get highlightSameDigit;
+
+  /// No description provided for @exitHighlightSameDigit.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off digit highlight'**
+  String get exitHighlightSameDigit;
+
   /// No description provided for @help.
   ///
   /// In en, this message translates to:
@@ -493,6 +505,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Toggle note mode — pencil candidate digits into cells instead of entering answers. Press N.'**
   String get helpToolbarNotesDesc;
+
+  /// No description provided for @helpToolbarHighlightDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight all cells that contain the same digit as the selected cell.'**
+  String get helpToolbarHighlightDesc;
 
   /// No description provided for @helpToolbarUndoDesc.
   ///

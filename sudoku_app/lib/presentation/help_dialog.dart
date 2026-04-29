@@ -68,6 +68,7 @@ class _HelpPanelState extends State<HelpPanel> {
 
     final items = <(List<IconData>, String, String)>[
       ([Icons.edit_note_outlined], l10n.notes, l10n.helpToolbarNotesDesc),
+      ([Icons.highlight], l10n.highlightSameDigit, l10n.helpToolbarHighlightDesc),
       ([Icons.undo_outlined, Icons.redo_outlined], '${l10n.undo} / ${l10n.redo}', l10n.helpToolbarUndoDesc),
       ([Icons.backspace_outlined], l10n.clearCell, l10n.helpToolbarClearDesc),
       ([Icons.replay_outlined], l10n.resetPuzzle, l10n.helpToolbarResetDesc),

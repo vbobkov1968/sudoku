@@ -181,6 +181,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get restoreMilestone => 'Восстановить закладку';
 
   @override
+  String get highlightSameDigit => 'Подсветка одинаковых цифр';
+
+  @override
+  String get exitHighlightSameDigit => 'Выключить подсветку цифр';
+
+  @override
   String get help => 'Справка';
 
   @override
@@ -210,6 +216,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get helpToolbarNotesDesc =>
       'Режим заметок — вводит кандидатов в ячейку вместо окончательного ответа. Нажмите N.';
+
+  @override
+  String get helpToolbarHighlightDesc =>
+      'Подсвечивает все ячейки с той же цифрой, что и выбранная.';
 
   @override
   String get helpToolbarUndoDesc => 'Отменить / Повторить последние ходы.';
