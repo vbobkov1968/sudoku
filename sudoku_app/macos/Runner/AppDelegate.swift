@@ -33,6 +33,7 @@ class AppDelegate: FlutterAppDelegate {
   private let viewMenuTranslator = ViewMenuTranslator()
   private var helpMenuItemAdded = false
   private var secretMenuItemAdded = false
+  private var flagsMonitor: Any?
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return true
@@ -48,7 +49,7 @@ class AppDelegate: FlutterAppDelegate {
     applyLocale(lang)
   }
 
-  // MARK: - Lazy menu additions (called from applicationWillUpdate when menu is ready)
+  // MARK: - Lazy menu additions
 
   private func ensureHelpMenuItemAdded() {
     guard !helpMenuItemAdded else { return }
@@ -74,13 +75,48 @@ class AppDelegate: FlutterAppDelegate {
     let aboutSel = NSSelectorFromString("orderFrontStandardAboutPanel:")
     guard let aboutItem = appleMenu.items.first(where: { $0.action == aboutSel }),
           let aboutIdx = appleMenu.items.firstIndex(of: aboutItem) else { return }
+
     let title = currentLocale == "ru" ? "Показать решение" : "Show Solution"
     let secret = NSMenuItem(title: title, action: #selector(showSolution(_:)), keyEquivalent: "")
-    secret.keyEquivalentModifierMask = .option
-    secret.isAlternate = true
+    secret.isHidden = true
     secret.target = self
     appleMenu.insertItem(secret, at: aboutIdx + 1)
+
+    // Watch the app menu for Option key changes while it is open.
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(appMenuDidBeginTracking),
+      name: NSMenu.didBeginTrackingNotification,
+      object: appleMenu
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(appMenuDidEndTracking),
+      name: NSMenu.didEndTrackingNotification,
+      object: appleMenu
+    )
+
     secretMenuItemAdded = true
+  }
+
+  @objc private func appMenuDidBeginTracking() {
+    // Check state at open time
+    setSecretItemVisible(NSEvent.modifierFlags.contains(.option))
+    // Monitor modifier key changes while the menu is open
+    flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+      self?.setSecretItemVisible(event.modifierFlags.contains(.option))
+      return event
+    }
+  }
+
+  @objc private func appMenuDidEndTracking() {
+    if let m = flagsMonitor { NSEvent.removeMonitor(m); flagsMonitor = nil }
+    setSecretItemVisible(false)
+  }
+
+  private func setSecretItemVisible(_ visible: Bool) {
+    appleMenuItem(selector: NSSelectorFromString("orderFrontStandardAboutPanel:"))?.isHidden = visible
+    appleMenuItem(selector: #selector(showSolution(_:)))?.isHidden = !visible
   }
 
   override func applicationWillUpdate(_ notification: Notification) {
@@ -92,7 +128,6 @@ class AppDelegate: FlutterAppDelegate {
         if item.title == "View"  { item.title = "Вид";     item.submenu?.title = "Вид" }
         if item.title == "Help"  { item.title = "Справка"; item.submenu?.title = "Справка" }
       }
-      // Re-attach delegate every update in case macOS replaced the submenu object
       if let sub = item.submenu, sub.items.contains(where: { $0.action == toggleFS }) {
         if !(sub.delegate === viewMenuTranslator) {
           sub.delegate = viewMenuTranslator
