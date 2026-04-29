@@ -27,10 +27,25 @@ private class ViewMenuTranslator: NSObject, NSMenuDelegate {
   }
 }
 
+// Shows/hides the secret "Show Solution" item when Option is held.
+private class AppleMenuDelegate: NSObject, NSMenuDelegate {
+  weak var appDelegate: AppDelegate?
+
+  func menuWillOpen(_ menu: NSMenu) {
+    let optionHeld = NSEvent.modifierFlags.contains(.option)
+    appDelegate?.setSecretItemVisible(optionHeld)
+  }
+
+  func menuDidClose(_ menu: NSMenu) {
+    appDelegate?.setSecretItemVisible(false)
+  }
+}
+
 @main
 class AppDelegate: FlutterAppDelegate {
   private var currentLocale = "en"
   private let viewMenuTranslator = ViewMenuTranslator()
+  private let appleMenuDelegate = AppleMenuDelegate()
   private var helpMenuItemAdded = false
   private var secretMenuItemAdded = false
 
@@ -77,11 +92,17 @@ class AppDelegate: FlutterAppDelegate {
           let aboutIdx = appleMenu.items.firstIndex(of: aboutItem) else { return }
     let title = currentLocale == "ru" ? "Показать решение" : "Show Solution"
     let secret = NSMenuItem(title: title, action: #selector(showSolution(_:)), keyEquivalent: "")
-    secret.keyEquivalentModifierMask = .option
-    secret.isAlternate = true
+    secret.isHidden = true
     secret.target = self
     appleMenu.insertItem(secret, at: aboutIdx + 1)
+    appleMenuDelegate.appDelegate = self
+    appleMenu.delegate = appleMenuDelegate
     secretMenuItemAdded = true
+  }
+
+  func setSecretItemVisible(_ visible: Bool) {
+    appleMenuItem(selector: NSSelectorFromString("orderFrontStandardAboutPanel:"))?.isHidden = visible
+    appleMenuItem(selector: #selector(showSolution(_:)))?.isHidden = !visible
   }
 
   override func applicationWillUpdate(_ notification: Notification) {
