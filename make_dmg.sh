@@ -2,9 +2,10 @@
 set -e
 
 APP_NAME="Sudoku"
+VERSION="1.1.0"
 BUILD_DIR="sudoku_app/build/macos/Build/Products/Release"
 STAGING="sudoku_app/build/dmg_staging"
-OUT="sudoku_app/build/$APP_NAME.dmg"
+OUT="sudoku_app/build/$APP_NAME-$VERSION.dmg"
 
 if [ ! -d "$BUILD_DIR/$APP_NAME.app" ]; then
   echo "Release app not found. Run 'flutter build macos --release' first."
@@ -17,43 +18,35 @@ mkdir -p "$STAGING"
 echo "Copying $APP_NAME.app..."
 cp -R "$BUILD_DIR/$APP_NAME.app" "$STAGING/$APP_NAME.app"
 
-echo "Creating install script..."
-cat > "$STAGING/Install $APP_NAME.command" << 'EOF'
-#!/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP="Sudoku.app"
-DEST="/Applications/$APP"
+echo "Creating Applications alias..."
+ln -sf /Applications "$STAGING/Applications"
 
-echo ""
-echo "=== Sudoku Installer ==="
-echo ""
+echo "Creating README..."
+cat > "$STAGING/README.txt" << 'EOF'
+Установка / Installation
+========================
 
-if [ -d "$DEST" ]; then
-  echo "Updating existing installation..."
-  rm -rf "$DEST"
-fi
+Перетащите Sudoku.app в папку Applications.
 
-echo "Copying to /Applications..."
-if ! cp -R "$SCRIPT_DIR/$APP" "$DEST" 2>/dev/null; then
-  echo "Trying with administrator privileges..."
-  sudo cp -R "$SCRIPT_DIR/$APP" "$DEST"
-fi
+Drag Sudoku.app into the Applications folder.
 
-echo "Removing quarantine..."
-xattr -cr "$DEST"
 
-echo ""
-echo "Done. Launch Sudoku from Applications or Launchpad."
-echo ""
-read -p "Press Enter to close..."
+Если macOS блокирует запуск / If macOS blocks the app
+------------------------------------------------------
+
+Выполните в Терминале:
+
+    xattr -cr /Applications/Sudoku.app
+
+Run in Terminal:
+
+    xattr -cr /Applications/Sudoku.app
 EOF
-
-chmod +x "$STAGING/Install $APP_NAME.command"
 
 echo "Building DMG..."
 rm -f "$OUT"
 hdiutil create \
-  -volname "$APP_NAME" \
+  -volname "$APP_NAME $VERSION" \
   -srcfolder "$STAGING" \
   -ov \
   -format UDZO \
