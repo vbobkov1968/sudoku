@@ -159,9 +159,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   onContinue: _dismissVictory,
                 ),
               if (_showSolution)
-                SolutionOverlay(
-                  gameState: _gameState,
-                  onDismiss: _dismissSolution,
+                Positioned.fill(
+                  child: SolutionOverlay(
+                    gameState: _gameState,
+                    onDismiss: _dismissSolution,
+                  ),
                 ),
             ],
           ),

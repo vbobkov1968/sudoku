@@ -18,29 +18,30 @@ class SolutionOverlay extends StatelessWidget {
     return GestureDetector(
       onTap: onDismiss,
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: ColoredBox(
         color: Colors.black.withValues(alpha: 0.85),
         child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: AspectRatio(
-                    aspectRatio: 1.0,
-                    child: _buildGrid(context),
+          child: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 1.0,
+                      child: _buildGrid(context),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.tapToClose,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white38,
-                  ),
+              ),
+              Text(
+                l10n.tapToClose,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white38,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
