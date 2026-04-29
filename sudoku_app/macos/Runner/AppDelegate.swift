@@ -69,20 +69,34 @@ class AppDelegate: FlutterAppDelegate {
   }
 
   private func ensureSecretMenuItemAdded() {
-    guard !secretMenuItemAdded else { return }
-    guard let appleMenu = NSApp.mainMenu?.item(at: 0)?.submenu else { return }
-    let aboutSel = NSSelectorFromString("orderFrontStandardAboutPanel:")
+    guard let appleMenu = NSApp.mainMenu?.item(at: 0)?.submenu else {
+      print("[SECRET] appleMenu not found")
+      return
+    }
+    let showSel = #selector(showSolution(_:))
+    if appleMenu.items.contains(where: { $0.action == showSel }) {
+      if !secretMenuItemAdded {
+        print("[SECRET] item already present, marking done")
+        secretMenuItemAdded = true
+      }
+      return
+    }
+    // Flutter replaces the standard About item's action with openAbout:
+    let aboutSel = #selector(openAbout(_:))
     guard let aboutItem = appleMenu.items.first(where: { $0.action == aboutSel }),
-          let aboutIdx = appleMenu.items.firstIndex(of: aboutItem) else { return }
-
+          let aboutIdx = appleMenu.items.firstIndex(of: aboutItem) else {
+      print("[SECRET] aboutItem not found; items: \(appleMenu.items.map { "\($0.title)|\(String(describing: $0.action))" })")
+      return
+    }
     let title = currentLocale == "ru" ? "Показать решение" : "Show Solution"
-    let secret = NSMenuItem(title: title, action: #selector(showSolution(_:)), keyEquivalent: "")
-    // isAlternate: system manages hidden state automatically — do NOT set isHidden manually
+    let secret = NSMenuItem(title: title, action: showSel, keyEquivalent: "")
     secret.isAlternate = true
     secret.keyEquivalentModifierMask = .option
     secret.target = self
     appleMenu.insertItem(secret, at: aboutIdx + 1)
     secretMenuItemAdded = true
+    print("[SECRET] inserted '\(title)' at index \(aboutIdx + 1), isAlternate=\(secret.isAlternate)")
+    print("[SECRET] menu now: \(appleMenu.items.map { "\($0.title)(hidden:\($0.isHidden),alt:\($0.isAlternate))" })")
   }
 
   override func applicationWillUpdate(_ notification: Notification) {
@@ -126,7 +140,7 @@ class AppDelegate: FlutterAppDelegate {
 
   private func translateAppleMenuToRussian() {
     let name = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Sudoku"
-    appleMenuItem(selector: NSSelectorFromString("orderFrontStandardAboutPanel:"))?.title = "О приложении"
+    appleMenuItem(selector: #selector(openAbout(_:)))?.title = "О приложении"
     appleMenuItem(selector: #selector(openSettings(_:)))?.title = "Настройки"
     appleMenuItem(selector: NSSelectorFromString("hide:"))?.title = "Скрыть \(name)"
     appleMenuItem(selector: NSSelectorFromString("hideOtherApplications:"))?.title = "Скрыть остальные"
@@ -138,7 +152,7 @@ class AppDelegate: FlutterAppDelegate {
 
   private func revertAppleMenuToEnglish() {
     let name = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Sudoku"
-    appleMenuItem(selector: NSSelectorFromString("orderFrontStandardAboutPanel:"))?.title = "About \(name)"
+    appleMenuItem(selector: #selector(openAbout(_:)))?.title = "About \(name)"
     appleMenuItem(selector: #selector(openSettings(_:)))?.title = "Settings\u{2026}"
     appleMenuItem(selector: NSSelectorFromString("hide:"))?.title = "Hide \(name)"
     appleMenuItem(selector: NSSelectorFromString("hideOtherApplications:"))?.title = "Hide Others"
