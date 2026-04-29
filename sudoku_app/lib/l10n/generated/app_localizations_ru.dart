@@ -187,6 +187,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exitHighlightSameDigit => 'Выключить подсветку цифр';
 
   @override
+  String get showSolution => 'Показать решение';
+
+  @override
+  String get tapToClose => 'Нажмите, чтобы закрыть';
+
+  @override
   String get help => 'Справка';
 
   @override

@@ -17,6 +17,7 @@ import 'help_dialog.dart' show HelpPanel;
 import 'difficulty_picker_dialog.dart';
 import 'settings_screen.dart';
 import 'widgets/number_pad.dart';
+import 'widgets/solution_overlay.dart';
 import 'widgets/sudoku_grid.dart';
 import 'widgets/victory_overlay.dart';
 
@@ -43,6 +44,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   late GameState _gameState;
   late Difficulty _difficulty;
   bool _showVictory = false;
+  bool _showSolution = false;
   bool _highlightSameDigit = false;
   final FocusNode _focusNode = FocusNode();
   final List<Milestone> _milestones = [];
@@ -84,6 +86,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (call.method == 'openSettings') SettingsDialog.show(context);
     if (call.method == 'openAbout') AboutAppDialog.show(context);
     if (call.method == 'openHelp') HelpPanel.show(context);
+    if (call.method == 'showSolution') _revealSolution();
   }
 
   @override
@@ -111,43 +114,57 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return KeyboardListener(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: _handleKeyEvent,
-      child: Scaffold(
-        backgroundColor: Platform.isAndroid
-            ? Theme.of(context).colorScheme.surface
-            : null,
-        appBar: Platform.isAndroid
-            ? AppBar(
-                title: Text(l10n.appTitle),
-                actions: [
-                  PopupMenuButton<String>(
-                    onSelected: (value) => _handleAndroidMenu(value, context),
-                    itemBuilder: (ctx) => [
-                      PopupMenuItem(value: 'settings', child: Text(l10n.settings)),
-                      PopupMenuItem(value: 'about', child: Text(l10n.about)),
-                      PopupMenuItem(value: 'help', child: Text(l10n.help)),
-                    ],
+    return PopScope(
+      canPop: !_showSolution,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _showSolution) _dismissSolution();
+      },
+      child: KeyboardListener(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: _handleKeyEvent,
+        child: Scaffold(
+          backgroundColor: Platform.isAndroid
+              ? Theme.of(context).colorScheme.surface
+              : null,
+          appBar: Platform.isAndroid
+              ? AppBar(
+                  title: GestureDetector(
+                    onLongPress: _revealSolution,
+                    child: Text(l10n.appTitle),
                   ),
-                ],
-              )
-            : null,
-        body: Stack(
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isDesktop = !Platform.isAndroid;
-                return isDesktop ? _buildDesktopLayout() : _buildMobileLayout();
-              },
-            ),
-            if (_showVictory)
-              VictoryOverlay(
-                onNewGame: _newGame,
-                onContinue: _dismissVictory,
+                  actions: [
+                    PopupMenuButton<String>(
+                      onSelected: (value) => _handleAndroidMenu(value, context),
+                      itemBuilder: (ctx) => [
+                        PopupMenuItem(value: 'settings', child: Text(l10n.settings)),
+                        PopupMenuItem(value: 'about', child: Text(l10n.about)),
+                        PopupMenuItem(value: 'help', child: Text(l10n.help)),
+                      ],
+                    ),
+                  ],
+                )
+              : null,
+          body: Stack(
+            children: [
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isDesktop = !Platform.isAndroid;
+                  return isDesktop ? _buildDesktopLayout() : _buildMobileLayout();
+                },
               ),
-          ],
+              if (_showVictory)
+                VictoryOverlay(
+                  onNewGame: _newGame,
+                  onContinue: _dismissVictory,
+                ),
+              if (_showSolution)
+                SolutionOverlay(
+                  gameState: _gameState,
+                  onDismiss: _dismissSolution,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -389,6 +406,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (event is! KeyDownEvent) return;
     final key = event.logicalKey;
 
+    if (key == LogicalKeyboardKey.escape) {
+      if (_showSolution) { _dismissSolution(); return; }
+    }
+
     final isCmd = Platform.isMacOS
         ? HardwareKeyboard.instance.isMetaPressed
         : HardwareKeyboard.instance.isControlPressed;
@@ -527,6 +548,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _toggleHighlightSameDigit() {
     setState(() => _highlightSameDigit = !_highlightSameDigit);
+  }
+
+  void _revealSolution() {
+    setState(() => _showSolution = true);
+  }
+
+  void _dismissSolution() {
+    setState(() => _showSolution = false);
   }
 
   void _undo() {

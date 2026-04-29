@@ -187,6 +187,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exitHighlightSameDigit => 'Turn off digit highlight';
 
   @override
+  String get showSolution => 'Show Solution';
+
+  @override
+  String get tapToClose => 'Tap to close';
+
+  @override
   String get help => 'Help';
 
   @override

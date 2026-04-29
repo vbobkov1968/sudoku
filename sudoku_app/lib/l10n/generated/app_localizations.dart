@@ -452,6 +452,18 @@ abstract class AppLocalizations {
   /// **'Turn off digit highlight'**
   String get exitHighlightSameDigit;
 
+  /// No description provided for @showSolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Solution'**
+  String get showSolution;
+
+  /// No description provided for @tapToClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to close'**
+  String get tapToClose;
+
   /// No description provided for @help.
   ///
   /// In en, this message translates to:
