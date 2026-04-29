@@ -69,25 +69,16 @@ class AppDelegate: FlutterAppDelegate {
   }
 
   private func ensureSecretMenuItemAdded() {
-    guard let appleMenu = NSApp.mainMenu?.item(at: 0)?.submenu else {
-      print("[SECRET] appleMenu not found")
-      return
-    }
+    guard let appleMenu = NSApp.mainMenu?.item(at: 0)?.submenu else { return }
     let showSel = #selector(showSolution(_:))
     if appleMenu.items.contains(where: { $0.action == showSel }) {
-      if !secretMenuItemAdded {
-        print("[SECRET] item already present, marking done")
-        secretMenuItemAdded = true
-      }
+      secretMenuItemAdded = true
       return
     }
     // Flutter replaces the standard About item's action with openAbout:
     let aboutSel = #selector(openAbout(_:))
     guard let aboutItem = appleMenu.items.first(where: { $0.action == aboutSel }),
-          let aboutIdx = appleMenu.items.firstIndex(of: aboutItem) else {
-      print("[SECRET] aboutItem not found; items: \(appleMenu.items.map { "\($0.title)|\(String(describing: $0.action))" })")
-      return
-    }
+          let aboutIdx = appleMenu.items.firstIndex(of: aboutItem) else { return }
     let title = currentLocale == "ru" ? "Показать решение" : "Show Solution"
     let secret = NSMenuItem(title: title, action: showSel, keyEquivalent: "")
     secret.isAlternate = true
@@ -95,8 +86,6 @@ class AppDelegate: FlutterAppDelegate {
     secret.target = self
     appleMenu.insertItem(secret, at: aboutIdx + 1)
     secretMenuItemAdded = true
-    print("[SECRET] inserted '\(title)' at index \(aboutIdx + 1), isAlternate=\(secret.isAlternate)")
-    print("[SECRET] menu now: \(appleMenu.items.map { "\($0.title)(hidden:\($0.isHidden),alt:\($0.isAlternate))" })")
   }
 
   override func applicationWillUpdate(_ notification: Notification) {
