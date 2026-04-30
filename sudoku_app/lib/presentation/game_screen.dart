@@ -17,7 +17,7 @@ import 'help_dialog.dart' show HelpPanel;
 import 'difficulty_picker_dialog.dart';
 import 'settings_screen.dart';
 import 'widgets/number_pad.dart';
-import 'widgets/solution_overlay.dart';
+import 'widgets/solution_overlay.dart' show SolutionGrid;
 import 'widgets/sudoku_grid.dart';
 import 'widgets/victory_overlay.dart';
 
@@ -47,6 +47,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   bool _showSolution = false;
   bool _highlightSameDigit = false;
   final FocusNode _focusNode = FocusNode();
+  final _gridKey = GlobalKey();
+  final _stackKey = GlobalKey();
   final List<Milestone> _milestones = [];
 
   @override
@@ -146,6 +148,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 )
               : null,
           body: Stack(
+            key: _stackKey,
             children: [
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -158,13 +161,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   onNewGame: _newGame,
                   onContinue: _dismissVictory,
                 ),
-              if (_showSolution)
-                Positioned.fill(
-                  child: SolutionOverlay(
-                    gameState: _gameState,
-                    onDismiss: _dismissSolution,
-                  ),
-                ),
+              if (_showSolution) _buildSolutionLayer(context),
             ],
           ),
         ),
@@ -196,6 +193,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               child: AspectRatio(
                 aspectRatio: 1.0,
                 child: SudokuGrid(
+                  key: _gridKey,
                   gameState: _gameState,
                   onCellTap: _onCellTap,
                   highlightSameDigit: _highlightSameDigit,
@@ -229,6 +227,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   width: gridSize,
                   height: gridSize,
                   child: SudokuGrid(
+                    key: _gridKey,
                     gameState: _gameState,
                     onCellTap: _onCellTap,
                     highlightSameDigit: _highlightSameDigit,
@@ -550,6 +549,52 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _toggleHighlightSameDigit() {
     setState(() => _highlightSameDigit = !_highlightSameDigit);
+  }
+
+  Widget _buildSolutionLayer(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final gridBox = _gridKey.currentContext?.findRenderObject() as RenderBox?;
+    final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+
+    Widget grid = const SizedBox.shrink();
+    if (gridBox != null && stackBox != null) {
+      final pos = stackBox.globalToLocal(gridBox.localToGlobal(Offset.zero));
+      final sz = gridBox.size;
+      grid = Positioned(
+        left: pos.dx,
+        top: pos.dy,
+        width: sz.width,
+        height: sz.height,
+        child: SolutionGrid(gameState: _gameState),
+      );
+    }
+
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: _dismissSolution,
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(color: Colors.black.withValues(alpha: 0.85)),
+            ),
+            grid,
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 20,
+              child: Text(
+                l10n.tapToClose,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white38,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _revealSolution() {
