@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/models/game_state.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -15,33 +16,38 @@ class SolutionOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return GestureDetector(
-      onTap: onDismiss,
-      behavior: HitTestBehavior.opaque,
-      child: ColoredBox(
-        color: Colors.black.withValues(alpha: 0.85),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: 1.0,
+    return SizedBox.expand(
+      child: GestureDetector(
+        onTap: onDismiss,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.85),
+          child: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final gridSize = min(
+                  constraints.maxWidth - 48,
+                  constraints.maxHeight - 72,
+                );
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: gridSize,
+                      height: gridSize,
                       child: _buildGrid(context),
                     ),
-                  ),
-                ),
-              ),
-              Text(
-                l10n.tapToClose,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white38,
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.tapToClose,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
