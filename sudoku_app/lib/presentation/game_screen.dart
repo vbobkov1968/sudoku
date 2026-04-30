@@ -47,8 +47,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   bool _showSolution = false;
   bool _highlightSameDigit = false;
   final FocusNode _focusNode = FocusNode();
-  final _gridKey = GlobalKey();
-  final _stackKey = GlobalKey();
   final List<Milestone> _milestones = [];
 
   @override
@@ -57,10 +55,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _gameState = widget.gameState;
     _difficulty = widget.difficulty;
     _milestones.addAll(widget.milestones);
-    if (Platform.isAndroid) {
-      WidgetsBinding.instance.addObserver(this);
-      WakelockPlus.enable();
-    }
+    WidgetsBinding.instance.addObserver(this);
+    if (Platform.isAndroid) WakelockPlus.enable();
     if (Platform.isMacOS) {
       _menuChannel.setMethodCallHandler(_handleMenuCall);
     }
@@ -91,6 +87,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (call.method == 'showSolution') _revealSolution();
   }
 
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!Platform.isAndroid) return;
@@ -104,10 +101,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    if (Platform.isAndroid) {
-      WidgetsBinding.instance.removeObserver(this);
-      WakelockPlus.disable();
-    }
+    WidgetsBinding.instance.removeObserver(this);
+    if (Platform.isAndroid) WakelockPlus.disable();
     if (Platform.isMacOS) _menuChannel.setMethodCallHandler(null);
     _focusNode.dispose();
     super.dispose();
@@ -148,20 +143,44 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 )
               : null,
           body: Stack(
-            key: _stackKey,
             children: [
+              if (_showSolution)
+                Positioned.fill(
+                  child: ColoredBox(color: Colors.black.withValues(alpha: 0.85)),
+                ),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isDesktop = !Platform.isAndroid;
                   return isDesktop ? _buildDesktopLayout() : _buildMobileLayout();
                 },
               ),
-              if (_showVictory)
+              if (_showVictory && !_showSolution)
                 VictoryOverlay(
                   onNewGame: _newGame,
                   onContinue: _dismissVictory,
                 ),
-              if (_showSolution) _buildSolutionLayer(context),
+              if (_showSolution) ...[
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: _dismissSolution,
+                    behavior: HitTestBehavior.opaque,
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 20,
+                  child: IgnorePointer(
+                    child: Text(
+                      l10n.tapToClose,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -192,20 +211,37 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             child: Center(
               child: AspectRatio(
                 aspectRatio: 1.0,
-                child: SudokuGrid(
-                  key: _gridKey,
-                  gameState: _gameState,
-                  onCellTap: _onCellTap,
-                  highlightSameDigit: _highlightSameDigit,
+                child: Stack(
+                  children: [
+                    SudokuGrid(
+                      gameState: _gameState,
+                      onCellTap: _onCellTap,
+                      highlightSameDigit: _highlightSameDigit,
+                    ),
+                    if (_showSolution)
+                      Positioned.fill(child: SolutionGrid(gameState: _gameState)),
+                  ],
                 ),
               ),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        _buildToolbar(context),
+        Visibility(
+          visible: !_showSolution,
+          maintainSize: true,
+          maintainAnimation: true,
+          maintainState: true,
+          child: _buildToolbar(context),
+        ),
         const SizedBox(height: 12),
-        SizedBox(width: 280, child: _buildNumpadCard()),
+        Visibility(
+          visible: !_showSolution,
+          maintainSize: true,
+          maintainAnimation: true,
+          maintainState: true,
+          child: SizedBox(width: 280, child: _buildNumpadCard()),
+        ),
         const SizedBox(height: 16),
       ],
     );
@@ -226,15 +262,32 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 SizedBox(
                   width: gridSize,
                   height: gridSize,
-                  child: SudokuGrid(
-                    key: _gridKey,
-                    gameState: _gameState,
-                    onCellTap: _onCellTap,
-                    highlightSameDigit: _highlightSameDigit,
+                  child: Stack(
+                    children: [
+                      SudokuGrid(
+                        gameState: _gameState,
+                        onCellTap: _onCellTap,
+                        highlightSameDigit: _highlightSameDigit,
+                      ),
+                      if (_showSolution)
+                        Positioned.fill(child: SolutionGrid(gameState: _gameState)),
+                    ],
                   ),
                 ),
-                _buildToolbar(context, width: null),
-                _buildNumpadCard(),
+                Visibility(
+                  visible: !_showSolution,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: _buildToolbar(context, width: null),
+                ),
+                Visibility(
+                  visible: !_showSolution,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: _buildNumpadCard(),
+                ),
               ],
             ),
           );
@@ -549,52 +602,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _toggleHighlightSameDigit() {
     setState(() => _highlightSameDigit = !_highlightSameDigit);
-  }
-
-  Widget _buildSolutionLayer(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final gridBox = _gridKey.currentContext?.findRenderObject() as RenderBox?;
-    final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
-
-    Widget grid = const SizedBox.shrink();
-    if (gridBox != null && stackBox != null) {
-      final pos = stackBox.globalToLocal(gridBox.localToGlobal(Offset.zero));
-      final sz = gridBox.size;
-      grid = Positioned(
-        left: pos.dx,
-        top: pos.dy,
-        width: sz.width,
-        height: sz.height,
-        child: SolutionGrid(gameState: _gameState),
-      );
-    }
-
-    return Positioned.fill(
-      child: GestureDetector(
-        onTap: _dismissSolution,
-        behavior: HitTestBehavior.opaque,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(color: Colors.black.withValues(alpha: 0.85)),
-            ),
-            grid,
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 20,
-              child: Text(
-                l10n.tapToClose,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white38,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _revealSolution() {

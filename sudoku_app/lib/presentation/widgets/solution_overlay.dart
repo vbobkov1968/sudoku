@@ -12,6 +12,7 @@ class SolutionGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        const Positioned.fill(child: ColoredBox(color: Colors.black)),
         GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -48,7 +49,8 @@ class SolutionGrid extends StatelessWidget {
       textColor = Colors.amber;
     }
 
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.all(2),
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
