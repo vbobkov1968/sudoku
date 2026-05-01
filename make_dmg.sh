@@ -22,28 +22,6 @@ cp -R "$BUILD_DIR/$APP_NAME.app" "$STAGING/$APP_NAME.app"
 
 ln -s /Applications "$STAGING/Applications"
 
-echo "Creating README..."
-cat > "$STAGING/README.txt" << 'EOF'
-Установка / Installation
-========================
-
-Перетащите Sudoku.app в папку Applications.
-
-Drag Sudoku.app into the Applications folder.
-
-
-Если macOS блокирует запуск / If macOS blocks the app
-------------------------------------------------------
-
-Выполните в Терминале:
-
-    xattr -cr /Applications/Sudoku.app
-
-Run in Terminal:
-
-    xattr -cr /Applications/Sudoku.app
-EOF
-
 # --- Create read-write DMG ---
 echo "Creating read-write DMG..."
 rm -f "$TMP_DMG" "$OUT"
@@ -52,6 +30,7 @@ hdiutil create \
   -srcfolder "$STAGING" \
   -ov \
   -format UDRW \
+  -fs HFS+ \
   "$TMP_DMG"
 
 rm -rf "$STAGING"
@@ -72,13 +51,12 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set bounds of container window to {200, 120, 780, 430}
+    set bounds of container window to {300, 200, 820, 460}
     set theOpts to icon view options of container window
     set arrangement of theOpts to not arranged
     set icon size of theOpts to 128
-    set position of item "$APP_NAME.app" of container window to {160, 175}
-    set position of item "Applications" of container window to {420, 175}
-    set position of item "README.txt" of container window to {290, 320}
+    set position of item "$APP_NAME.app" of container window to {130, 160}
+    set position of item "Applications" of container window to {390, 160}
     close
     open
     update without registering applications
