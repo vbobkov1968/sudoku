@@ -271,4 +271,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get helpKeyboardRedoDesc => 'Повторить';
+
+  @override
+  String get exportGame => 'Экспортировать';
+
+  @override
+  String get loadGame => 'Открыть игру';
+
+  @override
+  String get importSuccess => 'Игра загружена';
+
+  @override
+  String get importError => 'Неверный файл игры';
 }

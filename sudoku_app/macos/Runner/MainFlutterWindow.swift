@@ -73,10 +73,17 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
       binaryMessenger: vc.engine.binaryMessenger
     )
     MainFlutterWindow.menuChannel?.setMethodCallHandler { call, result in
-      if call.method == "setLocale", let lang = call.arguments as? String {
-        (NSApp.delegate as? AppDelegate)?.applyLocale(lang)
+      switch call.method {
+      case "setLocale":
+        if let lang = call.arguments as? String {
+          (NSApp.delegate as? AppDelegate)?.applyLocale(lang)
+        }
+        result(nil)
+      case "getPendingFile":
+        result((NSApp.delegate as? AppDelegate)?.consumePendingFile())
+      default:
+        result(nil)
       }
-      result(nil)
     }
 
     super.awakeFromNib()

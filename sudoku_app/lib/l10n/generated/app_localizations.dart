@@ -601,6 +601,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Redo'**
   String get helpKeyboardRedoDesc;
+
+  /// No description provided for @exportGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Export game'**
+  String get exportGame;
+
+  /// No description provided for @loadGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Open game'**
+  String get loadGame;
+
+  /// No description provided for @importSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Game loaded'**
+  String get importSuccess;
+
+  /// No description provided for @importError.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid game file'**
+  String get importError;
 }
 
 class _AppLocalizationsDelegate

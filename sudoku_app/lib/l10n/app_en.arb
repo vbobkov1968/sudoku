@@ -86,5 +86,9 @@
   "helpKeyboardArrowsDesc": "Move selection (wraps within row / column)",
   "helpKeyboardBackspaceDesc": "Clear selected cell",
   "helpKeyboardUndoDesc": "Undo",
-  "helpKeyboardRedoDesc": "Redo"
+  "helpKeyboardRedoDesc": "Redo",
+  "exportGame": "Export game",
+  "loadGame": "Open game",
+  "importSuccess": "Game loaded",
+  "importError": "Invalid game file"
 }

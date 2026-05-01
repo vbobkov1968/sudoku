@@ -1,6 +1,17 @@
 import Cocoa
 import FlutterMacOS
 
+private class AppleMenuDelegate: NSObject, NSMenuDelegate {
+  private let showSolutionSel = NSSelectorFromString("showSolution:")
+
+  func menuWillOpen(_ menu: NSMenu) {
+    for item in menu.items.reversed()
+      where item.isAlternate && item.action != showSolutionSel {
+      menu.removeItem(item)
+    }
+  }
+}
+
 private class ViewMenuTranslator: NSObject, NSMenuDelegate {
   var isRussian = false
 
@@ -30,9 +41,29 @@ private class ViewMenuTranslator: NSObject, NSMenuDelegate {
 @main
 class AppDelegate: FlutterAppDelegate {
   private var currentLocale = "en"
+  private let appleMenuDelegate = AppleMenuDelegate()
   private let viewMenuTranslator = ViewMenuTranslator()
   private var helpMenuItemAdded = false
   private var secretMenuItemAdded = false
+  private var editMenuItemsAdded = false
+  private var quitActionReplaced = false
+  private(set) var pendingFileData: FlutterStandardTypedData?
+
+  func consumePendingFile() -> FlutterStandardTypedData? {
+    defer { pendingFileData = nil }
+    return pendingFileData
+  }
+
+  override func application(_ application: NSApplication, open urls: [URL]) {
+    guard let url = urls.first, url.pathExtension == "sudoku" else { return }
+    guard let data = try? Data(contentsOf: url) else { return }
+    let typed = FlutterStandardTypedData(bytes: data)
+    if let ch = MainFlutterWindow.menuChannel {
+      ch.invokeMethod("openGameFile", arguments: typed)
+    } else {
+      pendingFileData = typed
+    }
+  }
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return true
@@ -46,6 +77,7 @@ class AppDelegate: FlutterAppDelegate {
     super.applicationDidFinishLaunching(notification)
     let lang = UserDefaults.standard.string(forKey: "flutter.settings_locale") ?? "en"
     applyLocale(lang)
+    NSApp.mainMenu?.item(at: 0)?.submenu?.delegate = appleMenuDelegate
   }
 
   // MARK: - Lazy menu additions (called from applicationWillUpdate once menu is ready)
@@ -88,17 +120,65 @@ class AppDelegate: FlutterAppDelegate {
     secretMenuItemAdded = true
   }
 
+  private func ensureEditMenuItemsAdded() {
+    guard !editMenuItemsAdded else { return }
+    let importSel = #selector(importGame(_:))
+    // Find existing Edit menu or create one after the Apple menu.
+    let editMenu: NSMenu
+    if let existing = NSApp.mainMenu?.items.first(where: {
+      $0.title == "Edit" || $0.title == "Правка"
+    })?.submenu {
+      editMenu = existing
+    } else {
+      let title = currentLocale == "ru" ? "Правка" : "Edit"
+      editMenu = NSMenu(title: title)
+      let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+      item.submenu = editMenu
+      NSApp.mainMenu?.insertItem(item, at: 1)
+    }
+    guard !editMenu.items.contains(where: { $0.action == importSel }) else {
+      editMenuItemsAdded = true; return
+    }
+    let isRu = currentLocale == "ru"
+    let openItem = NSMenuItem(
+      title: isRu ? "Открыть игру" : "Open Game",
+      action: importSel, keyEquivalent: "o")
+    openItem.keyEquivalentModifierMask = .command
+    openItem.target = self
+    let exportItem = NSMenuItem(
+      title: isRu ? "Экспортировать" : "Export Game",
+      action: #selector(exportGame(_:)), keyEquivalent: "e")
+    exportItem.keyEquivalentModifierMask = .command
+    exportItem.target = self
+    editMenu.insertItem(openItem,   at: 0)
+    editMenu.insertItem(exportItem, at: 1)
+    if editMenu.items.count > 2 { editMenu.insertItem(.separator(), at: 2) }
+    editMenuItemsAdded = true
+  }
+
   override func applicationWillUpdate(_ notification: Notification) {
     ensureHelpMenuItemAdded()
     ensureSecretMenuItemAdded()
+    ensureEditMenuItemsAdded()
+    ensureQuitActionReplaced()
     let toggleFS = NSSelectorFromString("toggleFullScreen:")
+    let importSel = #selector(importGame(_:))
+    let exportSel = #selector(exportGame(_:))
     for item in NSApp.mainMenu?.items ?? [] {
       if currentLocale == "ru" {
         if item.title == "View"  { item.title = "Вид";     item.submenu?.title = "Вид" }
         if item.title == "Help"  { item.title = "Справка"; item.submenu?.title = "Справка" }
+        if item.title == "Edit"  { item.title = "Правка";  item.submenu?.title = "Правка" }
+      } else {
+        if item.title == "Правка" { item.title = "Edit"; item.submenu?.title = "Edit" }
       }
-      if let sub = item.submenu, sub.items.contains(where: { $0.action == toggleFS }) {
-        if !(sub.delegate === viewMenuTranslator) {
+      if let sub = item.submenu {
+        sub.items.first(where: { $0.action == importSel })?.title =
+          currentLocale == "ru" ? "Открыть игру" : "Open Game"
+        sub.items.first(where: { $0.action == exportSel })?.title =
+          currentLocale == "ru" ? "Экспортировать" : "Export Game"
+        if sub.items.contains(where: { $0.action == toggleFS }),
+           !(sub.delegate === viewMenuTranslator) {
           sub.delegate = viewMenuTranslator
         }
       }
@@ -134,7 +214,7 @@ class AppDelegate: FlutterAppDelegate {
     appleMenuItem(selector: NSSelectorFromString("hide:"))?.title = "Скрыть \(name)"
     appleMenuItem(selector: NSSelectorFromString("hideOtherApplications:"))?.title = "Скрыть остальные"
     appleMenuItem(selector: NSSelectorFromString("unhideAllApplications:"))?.title = "Показать все"
-    appleMenuItem(selector: NSSelectorFromString("terminate:"))?.title = "Завершить \(name)"
+    appleMenuItem(selector: #selector(quitApp(_:)))?.title = "Завершить \(name)"
     appleMenuItem(selector: #selector(showSolution(_:)))?.title = "Показать решение"
     appleSubMenu()?.items.first { $0.title == "Services" || $0.title == "Службы" }?.title = "Службы"
   }
@@ -146,7 +226,7 @@ class AppDelegate: FlutterAppDelegate {
     appleMenuItem(selector: NSSelectorFromString("hide:"))?.title = "Hide \(name)"
     appleMenuItem(selector: NSSelectorFromString("hideOtherApplications:"))?.title = "Hide Others"
     appleMenuItem(selector: NSSelectorFromString("unhideAllApplications:"))?.title = "Show All"
-    appleMenuItem(selector: NSSelectorFromString("terminate:"))?.title = "Quit \(name)"
+    appleMenuItem(selector: #selector(quitApp(_:)))?.title = "Quit \(name)"
     appleMenuItem(selector: #selector(showSolution(_:)))?.title = "Show Solution"
     appleSubMenu()?.items.first { $0.title == "Services" || $0.title == "Службы" }?.title = "Services"
   }
@@ -175,6 +255,20 @@ class AppDelegate: FlutterAppDelegate {
     }
   }
 
+  private func ensureQuitActionReplaced() {
+    guard !quitActionReplaced else { return }
+    guard let appleMenu = NSApp.mainMenu?.item(at: 0)?.submenu else { return }
+    let terminateSel = NSSelectorFromString("terminate:")
+    guard let quitItem = appleMenu.items.first(where: { $0.action == terminateSel }) else { return }
+    quitItem.action = #selector(quitApp(_:))
+    quitItem.target = self
+    quitActionReplaced = true
+  }
+
+  @objc func quitApp(_ sender: Any?) {
+    NSApp.terminate(sender)
+  }
+
   // MARK: - Menu actions
 
   @IBAction func openSettings(_ sender: Any) {
@@ -191,5 +285,13 @@ class AppDelegate: FlutterAppDelegate {
 
   @objc func showSolution(_ sender: Any) {
     MainFlutterWindow.menuChannel?.invokeMethod("showSolution", arguments: nil)
+  }
+
+  @objc func importGame(_ sender: Any) {
+    MainFlutterWindow.menuChannel?.invokeMethod("importGame", arguments: nil)
+  }
+
+  @objc func exportGame(_ sender: Any) {
+    MainFlutterWindow.menuChannel?.invokeMethod("exportGame", arguments: nil)
   }
 }

@@ -10,6 +10,7 @@ import '../core/models/game_state.dart';
 import '../core/models/milestone.dart';
 import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
+import '../data/persistence/game_export_service.dart';
 import '../data/persistence/game_persistence.dart';
 import 'about_app_dialog.dart';
 import 'app_settings_scope.dart';
@@ -57,16 +58,19 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _milestones.addAll(widget.milestones);
     WidgetsBinding.instance.addObserver(this);
     if (Platform.isAndroid) WakelockPlus.enable();
-    if (Platform.isMacOS) {
-      _menuChannel.setMethodCallHandler(_handleMenuCall);
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _menuChannel.setMethodCallHandler(_handleMenuCall);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       _focusNode.requestFocus();
       if (Platform.isMacOS) {
         final lang = Localizations.localeOf(context).languageCode;
         _menuChannel.invokeMethod<void>('setLocale', lang).catchError((_) {});
       }
+      // Check if app was opened by tapping a .sudoku file (cold-start).
+      try {
+        final bytes = await _menuChannel.invokeMethod<Uint8List>('getPendingFile');
+        if (bytes != null && mounted) await _loadFromBytes(bytes);
+      } catch (_) {}
     });
   }
 
@@ -81,10 +85,17 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   Future<void> _handleMenuCall(MethodCall call) async {
     if (!mounted) return;
-    if (call.method == 'openSettings') SettingsDialog.show(context);
-    if (call.method == 'openAbout') AboutAppDialog.show(context);
-    if (call.method == 'openHelp') HelpPanel.show(context);
-    if (call.method == 'showSolution') _revealSolution();
+    switch (call.method) {
+      case 'openSettings':  SettingsDialog.show(context);
+      case 'openAbout':     AboutAppDialog.show(context);
+      case 'openHelp':      HelpPanel.show(context);
+      case 'showSolution':  _revealSolution();
+      case 'exportGame':    _exportGame();
+      case 'importGame':    _importGame();
+      case 'openGameFile':
+        final bytes = call.arguments as Uint8List;
+        await _loadFromBytes(bytes);
+    }
   }
 
 
@@ -93,6 +104,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (!Platform.isAndroid) return;
     if (state == AppLifecycleState.resumed) {
       WakelockPlus.enable();
+      // Check if app was brought to foreground by opening a .sudoku file
+      // (singleTask: onNewIntent sets pendingFileBytes, then app resumes).
+      _menuChannel.invokeMethod<Uint8List>('getPendingFile').then((bytes) {
+        if (bytes != null && mounted) _loadFromBytes(bytes);
+      }).catchError((_) {});
     } else if (state == AppLifecycleState.paused ||
                state == AppLifecycleState.inactive) {
       WakelockPlus.disable();
@@ -103,7 +119,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     if (Platform.isAndroid) WakelockPlus.disable();
-    if (Platform.isMacOS) _menuChannel.setMethodCallHandler(null);
+    _menuChannel.setMethodCallHandler(null);
     _focusNode.dispose();
     super.dispose();
   }
@@ -137,6 +153,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         PopupMenuItem(value: 'settings', child: Text(l10n.settings)),
                         PopupMenuItem(value: 'about', child: Text(l10n.about)),
                         PopupMenuItem(value: 'help', child: Text(l10n.help)),
+                        const PopupMenuDivider(),
+                        PopupMenuItem(value: 'export', child: Text(l10n.exportGame)),
                       ],
                     ),
                   ],
@@ -195,6 +213,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       AboutAppDialog.show(context);
     } else if (value == 'help') {
       HelpPanel.show(context);
+    } else if (value == 'export') {
+      _exportGame();
+    } else if (value == 'load') {
+      _importGame();
     }
   }
 
@@ -602,6 +624,56 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _toggleHighlightSameDigit() {
     setState(() => _highlightSameDigit = !_highlightSameDigit);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Export / import
+
+  Future<void> _exportGame() async {
+    await GameExportService.exportToFile(_gameState, _difficulty, _milestones);
+  }
+
+  Future<void> _importGame() async {
+    final saved = await GameExportService.importFromFile();
+    if (!mounted) return;
+    if (saved == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.importError)),
+      );
+      return;
+    }
+    _applyLoadedGame(saved);
+  }
+
+  Future<void> _loadFromBytes(Uint8List bytes) async {
+    final saved = GameExportService.decode(bytes);
+    if (!mounted) return;
+    if (saved == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.importError)),
+      );
+      return;
+    }
+    _applyLoadedGame(saved);
+  }
+
+  void _applyLoadedGame(({GameState state, Difficulty difficulty, List<Milestone> milestones}) saved) {
+    final notifier = AppSettingsScope.read(context);
+    notifier.update(notifier.value.withDifficulty(saved.difficulty));
+    setState(() {
+      _gameState = saved.state;
+      _difficulty = saved.difficulty;
+      _milestones
+        ..clear()
+        ..addAll(saved.milestones);
+      _showVictory = false;
+      _showSolution = false;
+      _focusNode.requestFocus();
+    });
+    _autosave();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context)!.importSuccess)),
+    );
   }
 
   void _revealSolution() {

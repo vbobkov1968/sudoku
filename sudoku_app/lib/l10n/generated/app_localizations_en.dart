@@ -271,4 +271,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get helpKeyboardRedoDesc => 'Redo';
+
+  @override
+  String get exportGame => 'Export game';
+
+  @override
+  String get loadGame => 'Open game';
+
+  @override
+  String get importSuccess => 'Game loaded';
+
+  @override
+  String get importError => 'Invalid game file';
 }

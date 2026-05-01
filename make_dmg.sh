@@ -2,7 +2,7 @@
 set -e
 
 APP_NAME="Sudoku"
-VERSION="1.1.0"
+VERSION="1.2.0"
 BUILD_DIR="sudoku_app/build/macos/Build/Products/Release"
 STAGING="sudoku_app/build/dmg_staging"
 OUT="sudoku_app/build/$APP_NAME-$VERSION.dmg"
