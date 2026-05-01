@@ -19,7 +19,16 @@ echo "Copying $APP_NAME.app..."
 cp -R "$BUILD_DIR/$APP_NAME.app" "$STAGING/$APP_NAME.app"
 
 echo "Creating Applications alias..."
-ln -sf /Applications "$STAGING/Applications"
+STAGING_ABS=$(cd "$STAGING" && pwd)
+osascript <<APPLESCRIPT
+tell application "Finder"
+    make alias file to POSIX file "/Applications" at POSIX file "$STAGING_ABS"
+end tell
+APPLESCRIPT
+# AppleScript may name it "Applications alias" depending on locale
+if [ -e "$STAGING/Applications alias" ]; then
+    mv "$STAGING/Applications alias" "$STAGING/Applications"
+fi
 
 echo "Creating README..."
 cat > "$STAGING/README.txt" << 'EOF'
