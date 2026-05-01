@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../l10n/generated/app_localizations.dart';
 
 class AboutAppDialog extends StatelessWidget {
@@ -40,11 +41,17 @@ class AboutAppDialog extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 4),
-          Text(
-            '1.1.0',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              final version = snapshot.data?.version ?? '';
+              return Text(
+                version,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              );
+            },
           ),
           const SizedBox(height: 20),
           Text(
