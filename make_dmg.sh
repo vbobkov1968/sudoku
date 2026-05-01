@@ -87,6 +87,11 @@ tell application "Finder"
 end tell
 APPLESCRIPT
 
+# Hide system files created by macOS during RW mount
+for f in .fseventsd .Spotlight-V100 .Trashes; do
+  [ -e "$VOLUME/$f" ] && chflags hidden "$VOLUME/$f" 2>/dev/null || true
+done
+
 sync
 
 # --- Unmount ---
