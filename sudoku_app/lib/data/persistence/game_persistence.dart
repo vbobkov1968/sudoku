@@ -8,7 +8,7 @@ import '../../core/models/difficulty.dart';
 import '../../core/models/game_state.dart';
 import '../../core/models/milestone.dart';
 
-typedef SavedGame = ({GameState state, Difficulty difficulty, List<Milestone> milestones});
+typedef SavedGame = ({GameState state, Difficulty difficulty, List<Milestone> milestones, bool highlightSameDigit});
 
 /// Persists and restores a single active game session using shared_preferences.
 ///
@@ -28,10 +28,11 @@ class GamePersistence {
   static Future<void> save(
     GameState state,
     Difficulty difficulty,
-    List<Milestone> milestones,
-  ) async {
+    List<Milestone> milestones, {
+    bool highlightSameDigit = false,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, jsonEncode(_encode(state, difficulty, milestones)));
+    await prefs.setString(_key, jsonEncode(_encode(state, difficulty, milestones, highlightSameDigit)));
   }
 
   static Future<SavedGame?> load() async {
@@ -56,13 +57,18 @@ class GamePersistence {
     GameState state,
     Difficulty difficulty,
     List<Milestone> milestones,
+    bool highlightSameDigit,
   ) => {
     'difficulty': difficulty.name,
+    'highlightSameDigit': highlightSameDigit,
     'initial': _boardToFlat(state.initialBoard),
     'solution': _boardToFlat(state.solutionBoard),
     'current': _boardToFlat(state.currentBoard),
     'notes': _notesToFlat(state.currentBoard),
     'noteMode': state.noteMode,
+    'selectedCell': state.selectedCell != null
+        ? [state.selectedCell!.$1, state.selectedCell!.$2]
+        : null,
     'undoStack': _encodeBoards(state.undoStack),
     'redoStack': _encodeBoards(state.redoStack),
     'milestones': [
@@ -105,6 +111,11 @@ class GamePersistence {
     final undoStack = _decodeBoards(map['undoStack'], initialInts);
     final redoStack = _decodeBoards(map['redoStack'], initialInts);
 
+    (int, int)? selectedCell;
+    if (map['selectedCell'] case final List sc) {
+      selectedCell = (sc[0] as int, sc[1] as int);
+    }
+
     final milestones = <Milestone>[];
     if (map['milestones'] case final List raw) {
       for (final entry in raw) {
@@ -122,11 +133,14 @@ class GamePersistence {
       solutionBoard: Board.fromInts(solutionInts),
       currentBoard: Board(currentGrid),
       noteMode: noteMode,
+      selectedCell: selectedCell,
       undoStack: undoStack,
       redoStack: redoStack,
     );
 
-    return (state: state, difficulty: difficulty, milestones: milestones);
+    final highlightSameDigit = map['highlightSameDigit'] as bool? ?? false;
+
+    return (state: state, difficulty: difficulty, milestones: milestones, highlightSameDigit: highlightSameDigit);
   }
 
   // ---------------------------------------------------------------------------

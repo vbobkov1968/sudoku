@@ -27,12 +27,14 @@ class GameScreen extends StatefulWidget {
   final GameState gameState;
   final Difficulty difficulty;
   final List<Milestone> milestones;
+  final bool highlightSameDigit;
 
   const GameScreen({
     super.key,
     required this.gameState,
     required this.difficulty,
     this.milestones = const [],
+    this.highlightSameDigit = false,
   });
 
   @override
@@ -56,6 +58,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _gameState = widget.gameState;
     _difficulty = widget.difficulty;
     _milestones.addAll(widget.milestones);
+    _highlightSameDigit = widget.highlightSameDigit;
     WidgetsBinding.instance.addObserver(this);
     if (Platform.isAndroid) WakelockPlus.enable();
     _menuChannel.setMethodCallHandler(_handleMenuCall);
@@ -594,7 +597,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _autosave();
   }
 
-  void _autosave() => GamePersistence.save(_gameState, _difficulty, _milestones);
+  void _autosave() => GamePersistence.save(_gameState, _difficulty, _milestones, highlightSameDigit: _highlightSameDigit);
 
   void _onDigitPressed(int digit) {
     setState(() {
@@ -624,6 +627,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _toggleHighlightSameDigit() {
     setState(() => _highlightSameDigit = !_highlightSameDigit);
+    _autosave();
   }
 
   // ---------------------------------------------------------------------------
@@ -657,7 +661,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _applyLoadedGame(saved);
   }
 
-  void _applyLoadedGame(({GameState state, Difficulty difficulty, List<Milestone> milestones}) saved) {
+  void _applyLoadedGame(SavedGame saved) {
     final notifier = AppSettingsScope.read(context);
     notifier.update(notifier.value.withDifficulty(saved.difficulty));
     setState(() {
