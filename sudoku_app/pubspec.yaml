@@ -23,6 +23,7 @@ dependencies:
   share_plus: ^10.1.4
   path_provider: ^2.1.5
   package_info_plus: ^8.0.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

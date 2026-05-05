@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../l10n/generated/app_localizations.dart';
@@ -60,27 +59,29 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _milestones.addAll(widget.milestones);
     _highlightSameDigit = widget.highlightSameDigit;
     WidgetsBinding.instance.addObserver(this);
-    if (Platform.isAndroid) WakelockPlus.enable();
-    _menuChannel.setMethodCallHandler(_handleMenuCall);
+    if (kIsWeb || defaultTargetPlatform == TargetPlatform.android) WakelockPlus.enable();
+    if (!kIsWeb) _menuChannel.setMethodCallHandler(_handleMenuCall);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       _focusNode.requestFocus();
-      if (Platform.isMacOS) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
         final lang = Localizations.localeOf(context).languageCode;
         _menuChannel.invokeMethod<void>('setLocale', lang).catchError((_) {});
       }
       // Check if app was opened by tapping a .sudoku file (cold-start).
-      try {
-        final bytes = await _menuChannel.invokeMethod<Uint8List>('getPendingFile');
-        if (bytes != null && mounted) await _loadFromBytes(bytes);
-      } catch (_) {}
+      if (!kIsWeb) {
+        try {
+          final bytes = await _menuChannel.invokeMethod<Uint8List>('getPendingFile');
+          if (bytes != null && mounted) await _loadFromBytes(bytes);
+        } catch (_) {}
+      }
     });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (Platform.isMacOS) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
       final lang = Localizations.localeOf(context).languageCode;
       _menuChannel.invokeMethod<void>('setLocale', lang).catchError((_) {});
     }
@@ -104,14 +105,16 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!Platform.isAndroid) return;
+    if (!kIsWeb && defaultTargetPlatform != TargetPlatform.android) return;
     if (state == AppLifecycleState.resumed) {
       WakelockPlus.enable();
-      // Check if app was brought to foreground by opening a .sudoku file
-      // (singleTask: onNewIntent sets pendingFileBytes, then app resumes).
-      _menuChannel.invokeMethod<Uint8List>('getPendingFile').then((bytes) {
-        if (bytes != null && mounted) _loadFromBytes(bytes);
-      }).catchError((_) {});
+      if (!kIsWeb) {
+        // Check if app was brought to foreground by opening a .sudoku file
+        // (singleTask: onNewIntent sets pendingFileBytes, then app resumes).
+        _menuChannel.invokeMethod<Uint8List>('getPendingFile').then((bytes) {
+          if (bytes != null && mounted) _loadFromBytes(bytes);
+        }).catchError((_) {});
+      }
     } else if (state == AppLifecycleState.paused ||
                state == AppLifecycleState.inactive) {
       WakelockPlus.disable();
@@ -121,8 +124,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (Platform.isAndroid) WakelockPlus.disable();
-    _menuChannel.setMethodCallHandler(null);
+    if (kIsWeb || defaultTargetPlatform == TargetPlatform.android) WakelockPlus.disable();
+    if (!kIsWeb) _menuChannel.setMethodCallHandler(null);
     _focusNode.dispose();
     super.dispose();
   }
@@ -140,17 +143,19 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         autofocus: true,
         onKeyEvent: _handleKeyEvent,
         child: Scaffold(
-          backgroundColor: Platform.isAndroid
+          backgroundColor: (kIsWeb || defaultTargetPlatform == TargetPlatform.android)
               ? Theme.of(context).colorScheme.surface
               : null,
-          appBar: Platform.isAndroid
+          appBar: (kIsWeb || defaultTargetPlatform == TargetPlatform.android)
               ? AppBar(
+                  centerTitle: false,
                   title: GestureDetector(
                     onLongPress: _revealSolution,
                     child: Text(l10n.appTitle),
                   ),
                   actions: [
                     PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
                       onSelected: (value) => _handleAndroidMenu(value, context),
                       itemBuilder: (ctx) => [
                         PopupMenuItem(value: 'settings', child: Text(l10n.settings)),
@@ -171,7 +176,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 ),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final isDesktop = !Platform.isAndroid;
+                  final isDesktop = !kIsWeb && defaultTargetPlatform != TargetPlatform.android;
                   return isDesktop ? _buildDesktopLayout() : _buildMobileLayout();
                 },
               ),
@@ -225,7 +230,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   /// Desktop layout: grid centred, toolbar + numpad pinned to bottom centre.
   Widget _buildDesktopLayout() {
-    final topPadding = Platform.isMacOS ? 52.0 : 24.0;
+    final topPadding = (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) ? 52.0 : 24.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -272,49 +277,90 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     );
   }
 
-  /// Mobile layout: grid, toolbar and numpad evenly distributed vertically.
+  /// Mobile / web layout: grid fills remaining space, controls pinned below.
   Widget _buildMobileLayout() {
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final availableWidth = constraints.maxWidth;
-          final gridSize = (availableWidth - 32).clamp(200.0, 500.0);
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                SizedBox(
-                  width: gridSize,
-                  height: gridSize,
-                  child: Stack(
-                    children: [
-                      SudokuGrid(
-                        gameState: _gameState,
-                        onCellTap: _onCellTap,
-                        highlightSameDigit: _highlightSameDigit,
-                      ),
-                      if (_showSolution)
-                        Positioned.fill(child: SolutionGrid(gameState: _gameState)),
-                    ],
-                  ),
-                ),
-                Visibility(
-                  visible: !_showSolution,
-                  maintainSize: true,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: _buildToolbar(context, width: null),
-                ),
-                Visibility(
-                  visible: !_showSolution,
-                  maintainSize: true,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: _buildNumpadCard(),
-                ),
-              ],
+          final aw = constraints.maxWidth;
+          final ah = constraints.maxHeight;
+
+          // Cap at 320 so numpad buttons stay ~60px tall (comfortable tap target).
+          final controlsWidth = (aw - 32).clamp(200.0, 320.0);
+
+          // Numpad height: GridView with childAspectRatio 1.6, 3 rows.
+          // buttonWidth = (controlsWidth − 28) / 3  (28 = card+gridview+cross-spacing)
+          // numpadCardHeight = 3 × (buttonWidth/1.6) + spacing + padding
+          //                  = (controlsWidth − 28) × 0.625 + 28
+          final numpadH = (controlsWidth - 28) * 0.625 + 28;
+          // Toolbar: 2 rows × 32px + 2px gap + 8px card padding = 74px
+          const toolbarH = 74.0;
+          const innerGap = 8.0; // between toolbar and numpad
+          const bottomPad = 12.0; // breathing room below numpad
+          final controlsH = toolbarH + innerGap + numpadH + bottomPad;
+
+          const gap = 8.0; // above grid, between grid and controls, below controls
+          // Grid: remaining height, min = controlsWidth (stops at toolbar width),
+          // max = full viewport width with side padding.
+          final gridSize = (ah - controlsH - gap * 3).clamp(controlsWidth, aw - 32.0);
+          final totalH = gridSize + controlsH + gap * 3;
+
+          final gridWidget = SizedBox(
+            width: gridSize,
+            height: gridSize,
+            child: Stack(children: [
+              SudokuGrid(
+                gameState: _gameState,
+                onCellTap: _onCellTap,
+                highlightSameDigit: _highlightSameDigit,
+              ),
+              if (_showSolution)
+                Positioned.fill(child: SolutionGrid(gameState: _gameState)),
+            ]),
+          );
+
+          final controlsWidget = Visibility(
+            visible: !_showSolution,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: SizedBox(
+              width: controlsWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildToolbar(context, width: null),
+                  const SizedBox(height: innerGap),
+                  _buildNumpadCard(),
+                  const SizedBox(height: bottomPad),
+                ],
+              ),
             ),
+          );
+
+          // Content overflows: allow scrolling.
+          if (totalH > ah) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: gap),
+                  Center(child: gridWidget),
+                  const SizedBox(height: gap),
+                  Center(child: controlsWidget),
+                  const SizedBox(height: gap),
+                ],
+              ),
+            );
+          }
+
+          // Content fits: distribute extra space evenly above/between/below.
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Center(child: gridWidget),
+              Center(child: controlsWidget),
+            ],
           );
         },
       ),
@@ -328,8 +374,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   Widget _buildToolbar(BuildContext context, {double? width = 280}) {
     final l10n = AppLocalizations.of(context)!;
-    final undoShortcut = Platform.isMacOS ? '⌘Z' : 'Ctrl+Z';
-    final redoShortcut = Platform.isMacOS ? '⇧⌘Z' : 'Shift+Ctrl+Z';
+    final isMac = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+    final undoShortcut = isMac ? '⌘Z' : 'Ctrl+Z';
+    final redoShortcut = isMac ? '⇧⌘Z' : 'Shift+Ctrl+Z';
     final timeFmt = DateFormat('HH:mm:ss');
 
     // Square constraints keep the ripple circular and prevent overflow for 8 buttons.
@@ -339,6 +386,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       color: _cardColor(context),
       elevation: 1,
       shadowColor: Colors.black26,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       child: Theme(
         data: Theme.of(context).copyWith(
@@ -474,6 +522,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       color: _cardColor(context),
       elevation: 1,
       shadowColor: Colors.black26,
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: NumberPad(onDigitPressed: _onDigitPressed),
@@ -489,7 +538,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       if (_showSolution) { _dismissSolution(); return; }
     }
 
-    final isCmd = Platform.isMacOS
+    final isCmd = (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS)
         ? HardwareKeyboard.instance.isMetaPressed
         : HardwareKeyboard.instance.isControlPressed;
     final isShift = HardwareKeyboard.instance.isShiftPressed;
