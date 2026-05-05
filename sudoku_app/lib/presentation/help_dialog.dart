@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -123,8 +122,10 @@ class _HelpPanelState extends State<HelpPanel> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isDesktop =
-        Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    final isDesktop = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.macOS ||
+         defaultTargetPlatform == TargetPlatform.windows ||
+         defaultTargetPlatform == TargetPlatform.linux);
 
     final styleSheet = MarkdownStyleSheet.fromTheme(theme).copyWith(
       h2: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -172,7 +173,7 @@ class _HelpPanelState extends State<HelpPanel> {
                         ),
                         const SizedBox(height: 12),
                         _buildToolbarSection(l10n, theme),
-                        if (Platform.isMacOS) ...[
+                        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) ...[
                           const SizedBox(height: 12),
                           MarkdownBody(
                             data: _buildKeyboardMarkdown(l10n),

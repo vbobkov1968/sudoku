@@ -1,14 +1,18 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../core/models/board.dart';
 import '../../core/models/cell.dart';
 import '../../core/models/difficulty.dart';
 import '../../core/models/game_state.dart';
 import '../../core/models/milestone.dart';
+import '../../platform/gzip_stub.dart'
+    if (dart.library.io) '../../platform/gzip_native.dart';
+import '../../platform/file_writer_stub.dart'
+    if (dart.library.io) '../../platform/file_writer_native.dart';
 import 'game_persistence.dart' show SavedGame;
 
 class GameExportService {
@@ -42,12 +46,12 @@ class GameExportService {
         },
       ],
     };
-    return Uint8List.fromList(GZipCodec().encode(utf8.encode(jsonEncode(map))));
+    return gzipEncode(utf8.encode(jsonEncode(map)));
   }
 
   static SavedGame? decode(Uint8List bytes) {
     try {
-      final map = jsonDecode(utf8.decode(GZipCodec().decode(bytes)))
+      final map = jsonDecode(utf8.decode(gzipDecode(bytes)))
           as Map<String, dynamic>;
 
       final difficulty = Difficulty.values.firstWhere(
@@ -106,8 +110,10 @@ class GameExportService {
   // ---------------------------------------------------------------------------
   // File I/O
 
-  /// macOS: shows NSSavePanel, writes file.
-  /// Android: writes to temp dir and opens share sheet (messengers, email, Files…).
+  /// Saves the game to a file.
+  /// Android: shares via native share sheet.
+  /// Desktop: FilePicker save dialog.
+  /// Web: triggers browser download.
   static Future<bool> exportToFile(
     GameState state,
     Difficulty difficulty,
@@ -115,24 +121,16 @@ class GameExportService {
   ) async {
     final bytes = encode(state, difficulty, milestones);
 
-    if (Platform.isAndroid) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       const channel = MethodChannel('com.sudoku/menu');
       await channel.invokeMethod<void>('shareGameFile', bytes);
       return true;
     }
 
-    final path = await FilePicker.platform.saveFile(
-      dialogTitle: 'Export Game',
-      fileName: 'sudoku_game.sudoku',
-      type: FileType.custom,
-      allowedExtensions: ['sudoku'],
-    );
-    if (path == null) return false;
-    await File(path).writeAsBytes(bytes);
-    return true;
+    return saveFileBytes('sudoku_game.sudoku', bytes);
   }
 
-  /// Shows open dialog (both platforms), returns parsed game or null on error.
+  /// Shows open dialog, returns parsed game or null on error.
   static Future<SavedGame?> importFromFile() async {
     final result = await FilePicker.platform.pickFiles(
       dialogTitle: 'Open Game',
@@ -147,7 +145,7 @@ class GameExportService {
   }
 
   // ---------------------------------------------------------------------------
-  // Helpers (mirrors GamePersistence internals)
+  // Helpers
 
   static List<Map<String, dynamic>> _encodeBoards(List<Board> boards) => [
     for (final b in boards) {'current': _boardToFlat(b), 'notes': _notesToFlat(b)},

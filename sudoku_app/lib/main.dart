@@ -1,10 +1,8 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/generated/app_localizations.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 
 import 'core/localization/app_locale.dart';
 import 'core/generator/puzzle_generator.dart';
@@ -14,6 +12,8 @@ import 'core/models/milestone.dart';
 import 'core/models/app_settings.dart';
 import 'data/persistence/game_persistence.dart';
 import 'data/persistence/settings_persistence.dart';
+import 'platform/window_effects_stub.dart'
+    if (dart.library.io) 'platform/window_effects_native.dart';
 import 'presentation/theme/app_theme.dart';
 import 'presentation/game_screen.dart';
 import 'presentation/app_settings_scope.dart';
@@ -21,19 +21,12 @@ import 'presentation/app_settings_scope.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isAndroid) {
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
   // macOS: window transparency is configured in Swift (MainFlutterWindow.swift).
-  if (!Platform.isAndroid && !Platform.isMacOS) {
-    await Window.initialize();
-    if (Platform.isWindows) {
-      await Window.setEffect(effect: WindowEffect.acrylic);
-    } else {
-      await Window.setEffect(effect: WindowEffect.transparent);
-    }
-  }
+  if (!kIsWeb) await initWindowEffects();
 
   final results = await Future.wait([
     GamePersistence.load(),
