@@ -452,6 +452,18 @@ abstract class AppLocalizations {
   /// **'Turn off digit highlight'**
   String get exitHighlightSameDigit;
 
+  /// No description provided for @hintAvailableDigits.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint available digits'**
+  String get hintAvailableDigits;
+
+  /// No description provided for @exitHintAvailableDigits.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off digit hints'**
+  String get exitHintAvailableDigits;
+
   /// No description provided for @showSolution.
   ///
   /// In en, this message translates to:
@@ -523,6 +535,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Highlight all cells that contain the same digit as the selected cell.'**
   String get helpToolbarHighlightDesc;
+
+  /// No description provided for @helpToolbarHintDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Show which digits are available for the selected cell: green background — valid digit not yet noted; green border — valid digit already in notes.'**
+  String get helpToolbarHintDesc;
 
   /// No description provided for @helpToolbarUndoDesc.
   ///

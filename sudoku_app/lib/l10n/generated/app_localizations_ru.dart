@@ -187,6 +187,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exitHighlightSameDigit => 'Выключить подсветку цифр';
 
   @override
+  String get hintAvailableDigits => 'Подсказка доступных цифр';
+
+  @override
+  String get exitHintAvailableDigits => 'Выключить подсказку цифр';
+
+  @override
   String get showSolution => 'Показать решение';
 
   @override
@@ -226,6 +232,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get helpToolbarHighlightDesc =>
       'Подсвечивает все ячейки с той же цифрой, что и выбранная.';
+
+  @override
+  String get helpToolbarHintDesc =>
+      'Показывает, какие цифры доступны для выбранной ячейки: зелёный фон — валидная цифра, ещё не внесённая в заметки; зелёная обводка — валидная цифра, уже отмеченная в заметках.';
 
   @override
   String get helpToolbarUndoDesc => 'Отменить / Повторить последние ходы.';

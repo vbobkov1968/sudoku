@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../core/models/game_state.dart';
+import '../core/validator/sudoku_validator.dart';
 import '../core/models/milestone.dart';
 import '../core/generator/puzzle_generator.dart';
 import '../core/models/difficulty.dart';
@@ -27,6 +28,7 @@ class GameScreen extends StatefulWidget {
   final Difficulty difficulty;
   final List<Milestone> milestones;
   final bool highlightSameDigit;
+  final bool hintAvailableDigits;
 
   const GameScreen({
     super.key,
@@ -34,6 +36,7 @@ class GameScreen extends StatefulWidget {
     required this.difficulty,
     this.milestones = const [],
     this.highlightSameDigit = false,
+    this.hintAvailableDigits = false,
   });
 
   @override
@@ -48,6 +51,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   bool _showVictory = false;
   bool _showSolution = false;
   bool _highlightSameDigit = false;
+  bool _hintAvailableDigits = false;
   final FocusNode _focusNode = FocusNode();
   final List<Milestone> _milestones = [];
 
@@ -58,6 +62,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _difficulty = widget.difficulty;
     _milestones.addAll(widget.milestones);
     _highlightSameDigit = widget.highlightSameDigit;
+    _hintAvailableDigits = widget.hintAvailableDigits;
     WidgetsBinding.instance.addObserver(this);
     if (kIsWeb || defaultTargetPlatform == TargetPlatform.android) WakelockPlus.enable();
     if (!kIsWeb) _menuChannel.setMethodCallHandler(_handleMenuCall);
@@ -466,7 +471,22 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  const SizedBox(width: 32, height: 32),
+                  IconButton(
+                    constraints: btnSize,
+                    icon: Icon(
+                      Icons.tips_and_updates_outlined,
+                      color: _hintAvailableDigits ? const Color(0xFF4CAF50) : null,
+                    ),
+                    onPressed: _toggleHintAvailableDigits,
+                    tooltip: _hintAvailableDigits
+                        ? l10n.exitHintAvailableDigits
+                        : l10n.hintAvailableDigits,
+                    style: _hintAvailableDigits
+                        ? IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                          )
+                        : null,
+                  ),
                   IconButton(
                     constraints: btnSize,
                     icon: const Icon(Icons.replay_outlined),
@@ -518,6 +538,28 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildNumpadCard() {
+    Set<int>? availableDigits;
+    Set<int>? notedAvailableDigits;
+
+    if (_hintAvailableDigits && _gameState.selectedCell != null) {
+      final (row, col) = _gameState.selectedCell!;
+      final cell = _gameState.currentBoard.getCell(row, col);
+      if (!cell.isGiven && cell.value == null) {
+        final board = _gameState.currentBoard.toInts();
+        availableDigits = {};
+        notedAvailableDigits = {};
+        for (var digit = 1; digit <= 9; digit++) {
+          if (SudokuValidator.isValidMove(board, row, col, digit)) {
+            if (cell.notes.contains(digit)) {
+              notedAvailableDigits.add(digit); // border: valid + noted
+            } else {
+              availableDigits.add(digit); // background: valid + not noted
+            }
+          }
+        }
+      }
+    }
+
     return Card(
       color: _cardColor(context),
       elevation: 1,
@@ -525,7 +567,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: NumberPad(onDigitPressed: _onDigitPressed),
+        child: NumberPad(
+          onDigitPressed: _onDigitPressed,
+          availableDigits: availableDigits,
+          notedAvailableDigits: notedAvailableDigits,
+        ),
       ),
     );
   }
@@ -646,7 +692,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _autosave();
   }
 
-  void _autosave() => GamePersistence.save(_gameState, _difficulty, _milestones, highlightSameDigit: _highlightSameDigit);
+  void _autosave() => GamePersistence.save(_gameState, _difficulty, _milestones, highlightSameDigit: _highlightSameDigit, hintAvailableDigits: _hintAvailableDigits);
 
   void _onDigitPressed(int digit) {
     setState(() {
@@ -676,6 +722,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _toggleHighlightSameDigit() {
     setState(() => _highlightSameDigit = !_highlightSameDigit);
+    _autosave();
+  }
+
+  void _toggleHintAvailableDigits() {
+    setState(() => _hintAvailableDigits = !_hintAvailableDigits);
     _autosave();
   }
 

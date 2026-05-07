@@ -187,6 +187,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exitHighlightSameDigit => 'Turn off digit highlight';
 
   @override
+  String get hintAvailableDigits => 'Hint available digits';
+
+  @override
+  String get exitHintAvailableDigits => 'Turn off digit hints';
+
+  @override
   String get showSolution => 'Show Solution';
 
   @override
@@ -226,6 +232,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get helpToolbarHighlightDesc =>
       'Highlight all cells that contain the same digit as the selected cell.';
+
+  @override
+  String get helpToolbarHintDesc =>
+      'Show which digits are available for the selected cell: green background — valid digit not yet noted; green border — valid digit already in notes.';
 
   @override
   String get helpToolbarUndoDesc => 'Undo / Redo your last moves.';

@@ -58,6 +58,7 @@ void main() async {
     initialSettings: settings,
     initialMilestones: saved?.milestones ?? [],
     initialHighlightSameDigit: saved?.highlightSameDigit ?? false,
+    initialHintAvailableDigits: saved?.hintAvailableDigits ?? false,
   ));
 }
 
@@ -67,6 +68,7 @@ class SudokuApp extends StatefulWidget {
   final AppSettings initialSettings;
   final List<Milestone> initialMilestones;
   final bool initialHighlightSameDigit;
+  final bool initialHintAvailableDigits;
 
   const SudokuApp({
     super.key,
@@ -75,6 +77,7 @@ class SudokuApp extends StatefulWidget {
     required this.initialSettings,
     required this.initialMilestones,
     this.initialHighlightSameDigit = false,
+    this.initialHintAvailableDigits = false,
   });
 
   @override
@@ -122,6 +125,7 @@ class _SudokuAppState extends State<SudokuApp> {
             difficulty: widget.initialDifficulty,
             milestones: widget.initialMilestones,
             highlightSameDigit: widget.initialHighlightSameDigit,
+            hintAvailableDigits: widget.initialHintAvailableDigits,
           ),
         ),
       ),

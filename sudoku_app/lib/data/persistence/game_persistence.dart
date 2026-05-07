@@ -8,7 +8,7 @@ import '../../core/models/difficulty.dart';
 import '../../core/models/game_state.dart';
 import '../../core/models/milestone.dart';
 
-typedef SavedGame = ({GameState state, Difficulty difficulty, List<Milestone> milestones, bool highlightSameDigit});
+typedef SavedGame = ({GameState state, Difficulty difficulty, List<Milestone> milestones, bool highlightSameDigit, bool hintAvailableDigits});
 
 /// Persists and restores a single active game session using shared_preferences.
 ///
@@ -30,9 +30,10 @@ class GamePersistence {
     Difficulty difficulty,
     List<Milestone> milestones, {
     bool highlightSameDigit = false,
+    bool hintAvailableDigits = false,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, jsonEncode(_encode(state, difficulty, milestones, highlightSameDigit)));
+    await prefs.setString(_key, jsonEncode(_encode(state, difficulty, milestones, highlightSameDigit, hintAvailableDigits)));
   }
 
   static Future<SavedGame?> load() async {
@@ -58,9 +59,11 @@ class GamePersistence {
     Difficulty difficulty,
     List<Milestone> milestones,
     bool highlightSameDigit,
+    bool hintAvailableDigits,
   ) => {
     'difficulty': difficulty.name,
     'highlightSameDigit': highlightSameDigit,
+    'hintAvailableDigits': hintAvailableDigits,
     'initial': _boardToFlat(state.initialBoard),
     'solution': _boardToFlat(state.solutionBoard),
     'current': _boardToFlat(state.currentBoard),
@@ -139,8 +142,9 @@ class GamePersistence {
     );
 
     final highlightSameDigit = map['highlightSameDigit'] as bool? ?? false;
+    final hintAvailableDigits = map['hintAvailableDigits'] as bool? ?? false;
 
-    return (state: state, difficulty: difficulty, milestones: milestones, highlightSameDigit: highlightSameDigit);
+    return (state: state, difficulty: difficulty, milestones: milestones, highlightSameDigit: highlightSameDigit, hintAvailableDigits: hintAvailableDigits);
   }
 
   // ---------------------------------------------------------------------------

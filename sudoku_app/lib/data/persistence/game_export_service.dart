@@ -101,7 +101,7 @@ class GameExportService {
         redoStack: _decodeBoards(map['redoStack'], initialInts),
       );
 
-      return (state: state, difficulty: difficulty, milestones: milestones, highlightSameDigit: false);
+      return (state: state, difficulty: difficulty, milestones: milestones, highlightSameDigit: false, hintAvailableDigits: false);
     } catch (_) {
       return null;
     }
